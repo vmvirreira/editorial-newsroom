@@ -25,16 +25,16 @@ export function ArticleCard({
     >
       <Link
         href={`/article/${article.slug}`}
-        className={isLead ? "block overflow-hidden bg-stone-200" : "hidden"}
+        className={isLead && article.image_url ? "block overflow-hidden bg-stone-200" : "hidden"}
       >
-        <Image
+        {article.image_url && <Image
           src={article.image_url}
           alt={article.image_alt}
           width={1200}
           height={760}
           priority={priority}
           className="aspect-[1.45] h-full w-full object-cover grayscale-[18%] transition duration-500 hover:scale-[1.02]"
-        />
+        />}
       </Link>
       <div className={isLead ? "flex flex-col justify-center" : ""}>
         <Link

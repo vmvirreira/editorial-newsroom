@@ -5,113 +5,74 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv } from "@/lib/supabase/env";
+import { getStaffSession } from "@/lib/staff";
+import { articleSchema } from "@/lib/article-validation";
 
-const articleSchema = z.object({
-  id: z.string().optional(),
-  category_id: z.string().min(1),
-  title: z.string().min(3),
-  slug: z
-    .string()
-    .min(3)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-  dek: z.string().min(10),
-  body: z.string().min(50),
-  author: z.string().min(2),
-  image_url: z.string().url(),
-  image_alt: z.string().min(3),
-  status: z.enum(["draft", "published"]),
-  is_featured: z.boolean(),
-  published_at: z.string().min(1),
-});
-
-async function requireAdmin() {
-  const supabase = await createSupabaseServerClient();
-  if (!supabase) throw new Error("Supabase is not configured.");
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/admin");
-
-  const { data } = await supabase
-    .from("admin_profiles")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!data) throw new Error("This account is not an admin.");
-  return supabase;
+async function requireStaff(editorOnly = false) {
+  const session = await getStaffSession();
+  if (!session.supabase || !session.user || !session.role) throw new Error("Staff access required.");
+  if (editorOnly && session.role !== "editor") throw new Error("Editor access required.");
+  return { ...session, supabase: session.supabase, user: session.user };
+}
+function refreshNewsroom() {
+  revalidatePath("/", "layout");
 }
 
 export async function signInWithGoogle() {
   if (!hasSupabaseEnv()) redirect("/admin?setup=1");
-
   const supabase = await createSupabaseServerClient();
   if (!supabase) redirect("/admin?setup=1");
-
-  const appUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "http://localhost:3000");
-
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: `${appUrl}/auth/callback?next=/admin`,
-    },
-  });
-
-  if (error || !data.url) throw new Error(error?.message ?? "Sign-in failed.");
+  const appUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+  const { data, error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${appUrl}/auth/callback?next=/admin` } });
+  if (error || !data.url) redirect("/admin?error=signin");
   redirect(data.url);
 }
-
 export async function signOut() {
   const supabase = await createSupabaseServerClient();
   await supabase?.auth.signOut();
   redirect("/");
 }
-
-export async function saveArticle(formData: FormData) {
-  const supabase = await requireAdmin();
-
-  const parsed = articleSchema.parse({
-    id: formData.get("id")?.toString() || undefined,
-    category_id: formData.get("category_id")?.toString(),
-    title: formData.get("title")?.toString(),
-    slug: formData.get("slug")?.toString(),
-    dek: formData.get("dek")?.toString(),
-    body: formData.get("body")?.toString(),
-    author: formData.get("author")?.toString(),
-    image_url: formData.get("image_url")?.toString(),
-    image_alt: formData.get("image_alt")?.toString(),
-    status: formData.get("status")?.toString(),
-    is_featured: formData.get("is_featured") === "on",
-    published_at: formData.get("published_at")?.toString(),
-  });
-
-  const { error } = await supabase.from("articles").upsert({
-    ...parsed,
-    published_at: new Date(parsed.published_at).toISOString(),
-  });
-
-  if (error) throw new Error(error.message);
-
-  revalidatePath("/");
-  revalidatePath("/admin");
-  revalidatePath(`/article/${parsed.slug}`);
+export async function saveArticle(_state: { error: string }, formData: FormData): Promise<{ error: string }> {
+  try {
+    const { supabase, user, role } = await requireStaff();
+    const fields = Object.fromEntries(formData);
+    const date = new Date(String(fields.published_at));
+    const parsed = articleSchema.safeParse({ ...fields, id: fields.id || undefined, published_at: Number.isNaN(date.getTime()) ? "" : date.toISOString(), is_featured: fields.is_featured === "on", content_blocks: JSON.parse(String(fields.content_blocks || "[]")) });
+    if (!parsed.success) return { error: parsed.error.issues.map((i) => `${i.path.join(".") || "Article"}: ${i.message}`).join(" ") };
+    const { id, ...article } = parsed.data;
+    if (role === "writer" && (article.status === "published" || article.is_featured)) return { error: "Editors handle publication and front-page placement. Submit your story for review." };
+    if (id) {
+      const { data: existing } = await supabase.from("articles").select("id,owner_id,status").eq("id", id).maybeSingle();
+      if (!existing || (role === "writer" && (existing.owner_id !== user.id || existing.status === "published"))) return { error: "You can edit only your own unpublished stories." };
+      const { error } = await supabase.from("articles").update(article).eq("id", id).select("id").single();
+      if (error) return { error: error.code === "23505" ? "That slug is already in use." : "Unable to save. Check permissions and database setup." };
+    } else {
+      const { error } = await supabase.from("articles").insert({ ...article, owner_id: user.id });
+      if (error) return { error: error.code === "23505" ? "That slug is already in use." : "Unable to save. Check permissions and database setup." };
+    }
+  } catch {
+    return { error: "Unable to save. Check your sign-in and content fields." };
+  }
+  refreshNewsroom();
   redirect("/admin?saved=1");
 }
-
-export async function deleteArticle(formData: FormData) {
-  const supabase = await requireAdmin();
-  const id = formData.get("id")?.toString();
-  if (!id) throw new Error("Missing article id.");
-
-  const { error } = await supabase.from("articles").delete().eq("id", id);
-  if (error) throw new Error(error.message);
-
-  revalidatePath("/");
-  revalidatePath("/admin");
+export async function deleteArticle(id: string) {
+  try {
+    const { supabase } = await requireStaff(true);
+    const parsed = z.string().uuid().parse(id);
+    const { error } = await supabase.from("articles").delete().eq("id", parsed).select("id").single();
+    if (error) return { error: "Unable to delete the story." };
+    refreshNewsroom();
+    return { error: "" };
+  } catch { return { error: "Editor access required to delete stories." }; }
+}
+export async function moveArticle(id: string, status: string, beforeId: string | null) {
+  try {
+    const { supabase } = await requireStaff(true);
+    const args = z.object({ article_id: z.string().uuid(), target_status: z.enum(["draft", "review", "published"]), before_id: z.string().uuid().nullable() }).parse({ article_id: id, target_status: status, before_id: beforeId });
+    const { error } = await supabase.rpc("move_newsroom_article", args);
+    if (error) return { error: "Unable to move the story. Refresh the board and try again." };
+    refreshNewsroom();
+    return { error: "" };
+  } catch { return { error: "Editor access required to arrange stories." }; }
 }

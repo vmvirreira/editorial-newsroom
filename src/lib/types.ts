@@ -1,3 +1,7 @@
+export type StaffRole = "writer" | "editor";
+export type ArticleStatus = "draft" | "review" | "published";
+export type ContentBlock = { type: "text"; text: string } | { type: "audio" | "video" | "link"; url: string; caption: string };
+
 export type Category = {
   id: string;
   name: string;
@@ -18,10 +22,13 @@ export type Article = {
   author: string;
   image_url: string;
   image_alt: string;
-  status: "draft" | "published";
+  status: ArticleStatus;
   is_featured: boolean;
   published_at: string;
   updated_at: string;
+  owner_id?: string | null;
+  position?: number;
+  content_blocks?: ContentBlock[];
 };
 
 export type ArticleInput = {
@@ -34,7 +41,7 @@ export type ArticleInput = {
   author: string;
   image_url: string;
   image_alt: string;
-  status: "draft" | "published";
+  status: ArticleStatus;
   is_featured: boolean;
   published_at: string;
 };
