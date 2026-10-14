@@ -1,5 +1,6 @@
+import { StaffLogin } from "@/components/staff-login";
 import Link from "next/link";
-import { signInWithGoogle, signOut } from "@/app/actions";
+import { signOut } from "@/app/actions";
 import { AdminForm } from "@/components/admin-form";
 import { NewsroomBoard } from "@/components/newsroom-board";
 import { getAllArticlesForAdmin, getCategories } from "@/lib/news";
@@ -14,7 +15,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       <h1 className="font-serif text-4xl font-black">{!supabase ? "The newsroom is being connected." : !user ? "Sign in to the newsroom" : "Awaiting staff access"}</h1>
       <p className="leading-7 text-stone-700">{!supabase ? "Staff publishing will be available once setup is complete." : !user ? "Approved writers create stories and submit them for review. Editors review, publish, and arrange coverage." : "Your account is signed in. The site owner needs to grant you writer or editor access before you can work on stories."}</p>
       {query.error && <p role="alert" className="text-red-900">Sign-in failed. Please try again.</p>}
-      {supabase && !user && <form action={signInWithGoogle}><button className="bg-stone-950 px-5 py-3 text-white">Continue with Google</button></form>}
+      {supabase && !user && <StaffLogin />}
       {user && <><p className="break-all text-sm">Signed in as {user.email}</p><p className="break-all text-xs text-stone-500">Account ID: {user.id}</p><form action={signOut}><button className="underline">Sign out</button></form></>}
       <Link href="/" className="underline">Back to site</Link>
     </section>

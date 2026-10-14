@@ -52,7 +52,7 @@ export async function getCategories(): Promise<Category[]> {
   if (!supabase) return demoCategories;
 
   const { data, error } = await supabase
-    .from("categories")
+    .from("newsroom_categories")
     .select("*")
     .order("sort_order", { ascending: true });
 
@@ -66,8 +66,8 @@ export async function getPublishedArticles(): Promise<Article[]> {
   if (!supabase) return demoArticles;
 
   const { data, error } = await supabase
-    .from("articles")
-    .select("*, categories(name, slug)")
+    .from("newsroom_articles")
+    .select("*, categories:newsroom_categories(name, slug)")
     .eq("status", "published")
     .lte("published_at", new Date().toISOString())
     .order("position", { ascending: true })
@@ -82,7 +82,7 @@ export async function getAllArticlesForAdmin(ownerId?: string): Promise<Article[
   const supabase = await createSupabaseServerClient();
   if (!supabase) return demoArticles;
 
-  let query = supabase.from("articles").select("*, categories(name, slug)");
+  let query = supabase.from("newsroom_articles").select("*, categories:newsroom_categories(name, slug)");
   if (ownerId) query = query.eq("owner_id", ownerId);
   const { data, error } = await query
     .order("position", { ascending: true })

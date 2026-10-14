@@ -14,7 +14,7 @@ export default async function Home() {
     data: { user },
   } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
   const staff = user
-    ? await supabase?.from("staff_profiles").select("role").eq("user_id", user.id).maybeSingle()
+    ? await supabase?.from("newsroom_staff_profiles").select("role").eq("user_id", user.id).maybeSingle()
     : null;
 
   const lead = articles.find((article) => article.is_featured) ?? articles[0];

@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { hasSupabaseEnv } from "@/lib/supabase/env";
 import { getStaffSession } from "@/lib/staff";
 import { articleSchema } from "@/lib/article-validation";
 
@@ -18,14 +17,24 @@ function refreshNewsroom() {
   revalidatePath("/", "layout");
 }
 
-export async function signInWithGoogle() {
-  if (!hasSupabaseEnv()) redirect("/admin?setup=1");
+export async function requestEmailSignIn(_state: { error: string; sent: boolean }, formData: FormData) {
+  const email = z.string().trim().email().safeParse(formData.get("email"));
+  if (!email.success) return { error: "Enter a valid email address.", sent: false };
   const supabase = await createSupabaseServerClient();
-  if (!supabase) redirect("/admin?setup=1");
+  if (!supabase) return { error: "Staff sign-in is being configured.", sent: false };
   const appUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
-  const { data, error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${appUrl}/auth/callback?next=/admin` } });
-  if (error || !data.url) redirect("/admin?error=signin");
-  redirect(data.url);
+  const { error } = await supabase.auth.signInWithOtp({ email: email.data, options: { emailRedirectTo: `${appUrl}/auth/callback` } });
+  if (error) return { error: "Unable to send a sign-in email. Please wait before trying again.", sent: false };
+  return { error: "", sent: true };
+}
+export async function verifyEmailSignIn(_state: { error: string }, formData: FormData): Promise<{ error: string }> {
+  const parsed = z.object({ email: z.string().trim().email(), token: z.string().trim().regex(/^[0-9]{6,10}$/) }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: "Enter the email address and code from your sign-in email." };
+  const supabase = await createSupabaseServerClient();
+  if (!supabase) return { error: "Staff sign-in is being configured." };
+  const { error } = await supabase.auth.verifyOtp({ ...parsed.data, type: "email" });
+  if (error) return { error: "This code is invalid or expired. Request a new sign-in email." };
+  redirect("/admin");
 }
 export async function signOut() {
   const supabase = await createSupabaseServerClient();
@@ -42,12 +51,12 @@ export async function saveArticle(_state: { error: string }, formData: FormData)
     const { id, ...article } = parsed.data;
     if (role === "writer" && (article.status === "published" || article.is_featured)) return { error: "Editors handle publication and front-page placement. Submit your story for review." };
     if (id) {
-      const { data: existing } = await supabase.from("articles").select("id,owner_id,status").eq("id", id).maybeSingle();
+      const { data: existing } = await supabase.from("newsroom_articles").select("id,owner_id,status").eq("id", id).maybeSingle();
       if (!existing || (role === "writer" && (existing.owner_id !== user.id || existing.status === "published"))) return { error: "You can edit only your own unpublished stories." };
-      const { error } = await supabase.from("articles").update(article).eq("id", id).select("id").single();
+      const { error } = await supabase.from("newsroom_articles").update(article).eq("id", id).select("id").single();
       if (error) return { error: error.code === "23505" ? "That slug is already in use." : "Unable to save. Check permissions and database setup." };
     } else {
-      const { error } = await supabase.from("articles").insert({ ...article, owner_id: user.id });
+      const { error } = await supabase.from("newsroom_articles").insert({ ...article, owner_id: user.id });
       if (error) return { error: error.code === "23505" ? "That slug is already in use." : "Unable to save. Check permissions and database setup." };
     }
   } catch {
@@ -60,7 +69,7 @@ export async function deleteArticle(id: string) {
   try {
     const { supabase } = await requireStaff(true);
     const parsed = z.string().uuid().parse(id);
-    const { error } = await supabase.from("articles").delete().eq("id", parsed).select("id").single();
+    const { error } = await supabase.from("newsroom_articles").delete().eq("id", parsed).select("id").single();
     if (error) return { error: "Unable to delete the story." };
     refreshNewsroom();
     return { error: "" };
