@@ -12,7 +12,7 @@ Editors drag cards between Drafts, For review, and Published. Dropping above ano
 
 Use **vmvirreira’s Project**, reference `tfxgzairleefuhstleeo`, which already backs Dayboard and Gabriel. See [the verified shared-backend context](docs/shared-supabase.md).
 
-Run `supabase/migrations/202610140001_newsroom.sql` once in that project's SQL editor. `supabase/schema.sql` contains the same complete, idempotent setup; choose either file, not both. All objects are newsroom-prefixed, and this setup does not change other apps' tables, policies, roles, Auth Site URL, or email templates. It does not import generic legacy tables automatically.
+The newsroom migrations have been applied to the shared project. For a new database, run the complete idempotent `supabase/schema.sql`, or apply the migration files in chronological order. All objects are newsroom-prefixed, and this setup does not change other apps' tables, policies, roles, Auth Site URL, or email templates. It does not import generic legacy tables automatically.
 
 Email authentication is already enabled; Google is currently disabled. Add `https://editorial-newsroom.vercel.app/auth/callback` and any intended local/preview callback URLs to the existing Supabase Auth redirect allow-list. **Keep the shared project's current Auth Site URL.** The newsroom requests its own redirect URL per sign-in. Existing email templates may offer a magic link or a code; both paths are supported.
 

@@ -33,13 +33,14 @@ create table if not exists public.newsroom_staff_profiles (
 alter table public.newsroom_staff_profiles enable row level security;
 alter table public.newsroom_articles enable row level security;
 create or replace function public.newsroom_current_role() returns text
-language sql stable security definer set search_path = '' as $$
+language sql stable security invoker set search_path = '' as $$
   select role from public.newsroom_staff_profiles where user_id = auth.uid();
 $$;
 revoke all on function public.newsroom_current_role() from public;
-grant execute on function public.newsroom_current_role() to anon, authenticated;
+grant execute on function public.newsroom_current_role() to authenticated;
+revoke all on public.newsroom_staff_profiles from anon;
 drop policy if exists "Staff can read own role" on public.newsroom_staff_profiles;
-create policy "Staff can read own role" on public.newsroom_staff_profiles for select to authenticated using (user_id = auth.uid());
+create policy "Staff can read own role" on public.newsroom_staff_profiles for select to authenticated using (user_id = (select auth.uid()));
 -- Roles are provisioned by the project owner via SQL, never by a self-service signup.
 grant select on public.newsroom_staff_profiles to authenticated;
 revoke insert, update, delete on public.newsroom_staff_profiles from anon, authenticated;
@@ -68,22 +69,26 @@ alter table public.newsroom_articles add constraint newsroom_articles_content_bl
 drop policy if exists "Anyone can read published articles" on public.newsroom_articles;
 drop policy if exists "Admins can manage articles" on public.newsroom_articles;
 drop policy if exists "Newsroom article reads" on public.newsroom_articles;
-create policy "Newsroom article reads" on public.newsroom_articles for select using (
-  (status = 'published' and published_at <= now()) or public.newsroom_current_role() = 'editor'
-  or (public.newsroom_current_role() = 'writer' and owner_id = auth.uid())
+drop policy if exists "Newsroom public reads" on public.newsroom_articles;
+create policy "Newsroom public reads" on public.newsroom_articles for select to anon, authenticated
+using (status = 'published' and published_at <= now());
+drop policy if exists "Newsroom staff reads" on public.newsroom_articles;
+create policy "Newsroom staff reads" on public.newsroom_articles for select to authenticated using (
+  (select public.newsroom_current_role()) = 'editor'
+  or ((select public.newsroom_current_role()) = 'writer' and owner_id = (select auth.uid()))
 );
 drop policy if exists "Newsroom article inserts" on public.newsroom_articles;
 create policy "Newsroom article inserts" on public.newsroom_articles for insert to authenticated with check (
-  public.newsroom_current_role() = 'editor' or (public.newsroom_current_role() = 'writer' and owner_id = auth.uid() and status in ('draft', 'review') and not is_featured)
+  (select public.newsroom_current_role()) = 'editor' or ((select public.newsroom_current_role()) = 'writer' and owner_id = (select auth.uid()) and status in ('draft', 'review') and not is_featured)
 );
 drop policy if exists "Newsroom article updates" on public.newsroom_articles;
 create policy "Newsroom article updates" on public.newsroom_articles for update to authenticated using (
-  public.newsroom_current_role() = 'editor' or (public.newsroom_current_role() = 'writer' and owner_id = auth.uid() and status in ('draft', 'review'))
+  (select public.newsroom_current_role()) = 'editor' or ((select public.newsroom_current_role()) = 'writer' and owner_id = (select auth.uid()) and status in ('draft', 'review'))
 ) with check (
-  public.newsroom_current_role() = 'editor' or (public.newsroom_current_role() = 'writer' and owner_id = auth.uid() and status in ('draft', 'review') and not is_featured)
+  (select public.newsroom_current_role()) = 'editor' or ((select public.newsroom_current_role()) = 'writer' and owner_id = (select auth.uid()) and status in ('draft', 'review') and not is_featured)
 );
 drop policy if exists "Newsroom article deletes" on public.newsroom_articles;
-create policy "Newsroom article deletes" on public.newsroom_articles for delete to authenticated using (public.newsroom_current_role() = 'editor');
+create policy "Newsroom article deletes" on public.newsroom_articles for delete to authenticated using ((select public.newsroom_current_role()) = 'editor');
 create or replace function public.newsroom_guard_article_ownership() returns trigger
 language plpgsql set search_path = '' as $$
 begin
@@ -111,7 +116,7 @@ grant select, insert, update, delete on public.newsroom_articles to authenticate
 revoke insert, update, delete on public.newsroom_categories from anon, authenticated;
 -- Atomic editor-only ordering and workflow transition. All clients share one lock.
 create or replace function public.move_newsroom_article(article_id uuid, target_status text, before_id uuid default null)
-returns void language plpgsql security definer set search_path = '' as $$
+returns void language plpgsql security invoker set search_path = '' as $$
 declare ordered_ids uuid[]; item uuid; n integer := 0;
 begin
   if public.newsroom_current_role() is distinct from 'editor' then raise exception 'Editor access required'; end if;
@@ -134,6 +139,7 @@ $$;
 revoke all on function public.move_newsroom_article(uuid, text, uuid) from public;
 grant execute on function public.move_newsroom_article(uuid, text, uuid) to authenticated;
 create index if not exists newsroom_articles_newsroom_order on public.newsroom_articles(status, position, published_at desc);
+create index if not exists newsroom_articles_category on public.newsroom_articles(category_id);
 create index if not exists newsroom_articles_owner on public.newsroom_articles(owner_id);
 insert into public.newsroom_categories (name, slug, deck, sort_order)
 values

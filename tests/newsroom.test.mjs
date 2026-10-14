@@ -46,7 +46,7 @@ test('Newsroom permissions and atomic ordering in PostgreSQL', async (t) => {
       create function public.is_admin() returns boolean language sql as $$ select true $$;
     `);
     const before = await db.query("select pg_get_functiondef('public.is_admin()'::regprocedure) as definition");
-    await db.exec(await readFile(new URL('../supabase/migrations/202610140001_newsroom.sql', import.meta.url), 'utf8'));
+    await db.exec(await readFile(new URL('../supabase/migrations/20261014050023_newsroom_writer_editor_setup.sql', import.meta.url), 'utf8'));
     await db.exec(`
       insert into public.newsroom_staff_profiles(user_id, role) values ('${editor}', 'editor');
       insert into public.newsroom_staff_profiles(user_id, role) values ('${writer}', 'writer'), ('${other}', 'writer');
