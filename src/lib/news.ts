@@ -1,7 +1,7 @@
 import { unstable_noStore as noStore } from "next/cache";
 import { demoArticles, demoCategories } from "./demo-data";
 import { createSupabaseServerClient } from "./supabase/server";
-import type { Article, Category } from "./types";
+import type { Article, Category, ContentBlock, ArticleStatus } from "./types";
 
 type ArticleRow = {
   id: string;
@@ -13,7 +13,10 @@ type ArticleRow = {
   author: string;
   image_url: string;
   image_alt: string;
-  status: "draft" | "published";
+  status: ArticleStatus;
+  owner_id: string | null;
+  position: number;
+  content_blocks: ContentBlock[];
   is_featured: boolean;
   published_at: string;
   updated_at: string;
@@ -23,6 +26,9 @@ type ArticleRow = {
 function mapArticle(row: ArticleRow): Article {
   return {
     id: row.id,
+    owner_id: row.owner_id,
+    position: row.position,
+    content_blocks: row.content_blocks,
     category_id: row.category_id,
     category_name: row.categories?.name ?? "News",
     category_slug: row.categories?.slug ?? "news",
@@ -46,11 +52,11 @@ export async function getCategories(): Promise<Category[]> {
   if (!supabase) return demoCategories;
 
   const { data, error } = await supabase
-    .from("categories")
+    .from("newsroom_categories")
     .select("*")
     .order("sort_order", { ascending: true });
 
-  if (error || !data?.length) return demoCategories;
+  if (error) throw new Error("Unable to load categories. Check the database setup.");
   return data as Category[];
 }
 
@@ -60,26 +66,29 @@ export async function getPublishedArticles(): Promise<Article[]> {
   if (!supabase) return demoArticles;
 
   const { data, error } = await supabase
-    .from("articles")
-    .select("*, categories(name, slug)")
+    .from("newsroom_articles")
+    .select("*, categories:newsroom_categories(name, slug)")
     .eq("status", "published")
+    .lte("published_at", new Date().toISOString())
+    .order("position", { ascending: true })
     .order("published_at", { ascending: false });
 
-  if (error || !data?.length) return demoArticles;
+  if (error) throw new Error("Unable to load articles. Check the database setup.");
   return (data as ArticleRow[]).map(mapArticle);
 }
 
-export async function getAllArticlesForAdmin(): Promise<Article[]> {
+export async function getAllArticlesForAdmin(ownerId?: string): Promise<Article[]> {
   noStore();
   const supabase = await createSupabaseServerClient();
   if (!supabase) return demoArticles;
 
-  const { data, error } = await supabase
-    .from("articles")
-    .select("*, categories(name, slug)")
-    .order("updated_at", { ascending: false });
+  let query = supabase.from("newsroom_articles").select("*, categories:newsroom_categories(name, slug)");
+  if (ownerId) query = query.eq("owner_id", ownerId);
+  const { data, error } = await query
+    .order("position", { ascending: true })
+    .order("published_at", { ascending: false });
 
-  if (error) return [];
+  if (error) throw new Error("Unable to load the newsroom. Check the database setup.");
   return ((data ?? []) as ArticleRow[]).map(mapArticle);
 }
 

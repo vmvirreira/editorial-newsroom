@@ -13,12 +13,8 @@ export default async function Home() {
   const {
     data: { user },
   } = supabase ? await supabase.auth.getUser() : { data: { user: null } };
-  const admin = user
-    ? await supabase
-        ?.from("admin_profiles")
-        .select("user_id")
-        .eq("user_id", user.id)
-        .maybeSingle()
+  const staff = user
+    ? await supabase?.from("newsroom_staff_profiles").select("role").eq("user_id", user.id).maybeSingle()
     : null;
 
   const lead = articles.find((article) => article.is_featured) ?? articles[0];
@@ -35,7 +31,7 @@ export default async function Home() {
       <SiteHeader
         categories={categories}
         signedIn={Boolean(user)}
-        isAdmin={Boolean(admin?.data)}
+        isAdmin={Boolean(staff?.data)}
       />
       <section className="mx-auto grid max-w-7xl gap-8 px-4 py-8 lg:grid-cols-[1fr_320px]">
         <div>{lead ? <ArticleCard article={lead} priority variant="lead" /> : null}</div>

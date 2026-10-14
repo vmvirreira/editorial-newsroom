@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "The Civic Ledger",
   description:
-    "A Supabase-powered editorial news site with public reading and admin publishing.",
+    "A Supabase-powered editorial news site with public reading, writer drafts, and editor publishing.",
 };
 
 export default function RootLayout({

@@ -1,17 +1,23 @@
+"use client";
+
+import { useActionState } from "react";
+import { ContentEditor } from "./content-editor";
 import { saveArticle } from "@/app/actions";
-import type { Article, Category } from "@/lib/types";
+import type { Article, Category, StaffRole } from "@/lib/types";
 
 type AdminFormProps = {
   categories: Category[];
   article?: Article;
+  role: StaffRole;
 };
 
-export function AdminForm({ categories, article }: AdminFormProps) {
+export function AdminForm({ categories, article, role }: AdminFormProps) {
+  const [state, action, pending] = useActionState(saveArticle, { error: "" });
   const now = new Date().toISOString().slice(0, 16);
 
   return (
     <form
-      action={saveArticle}
+      action={action}
       className="grid gap-4 border border-stone-300 bg-white p-5 shadow-sm"
     >
       <input type="hidden" name="id" defaultValue={article?.id} />
@@ -60,11 +66,12 @@ export function AdminForm({ categories, article }: AdminFormProps) {
             className="border border-stone-300 px-3 py-2 font-normal outline-none focus:border-stone-950"
           >
             <option value="draft">Draft</option>
-            <option value="published">Published</option>
+            <option value="review">Ready for review</option>
+            {role === "editor" && <option value="published">Published</option>}
           </select>
         </label>
         <label className="grid gap-1 text-sm font-semibold text-stone-800">
-          Publish date
+          Publish date (UTC; future dates remain private)
           <input
             required
             type="datetime-local"
@@ -91,7 +98,6 @@ export function AdminForm({ categories, article }: AdminFormProps) {
       <label className="grid gap-1 text-sm font-semibold text-stone-800">
         Body
         <textarea
-          required
           name="body"
           defaultValue={article?.body}
           rows={9}
@@ -111,7 +117,6 @@ export function AdminForm({ categories, article }: AdminFormProps) {
         <label className="grid gap-1 text-sm font-semibold text-stone-800 md:col-span-2">
           Image URL
           <input
-            required
             type="url"
             name="image_url"
             defaultValue={article?.image_url}
@@ -122,13 +127,13 @@ export function AdminForm({ categories, article }: AdminFormProps) {
       <label className="grid gap-1 text-sm font-semibold text-stone-800">
         Image alt text
         <input
-          required
           name="image_alt"
           defaultValue={article?.image_alt}
           className="border border-stone-300 px-3 py-2 font-normal outline-none focus:border-stone-950"
         />
       </label>
-      <label className="inline-flex items-center gap-2 text-sm font-semibold text-stone-800">
+      <ContentEditor initialBlocks={article?.content_blocks} />
+      {role === "editor" && <label className="inline-flex items-center gap-2 text-sm font-semibold text-stone-800">
         <input
           type="checkbox"
           name="is_featured"
@@ -136,9 +141,10 @@ export function AdminForm({ categories, article }: AdminFormProps) {
           className="h-4 w-4 accent-stone-950"
         />
         Feature on the front page
-      </label>
-      <button className="w-fit bg-stone-950 px-5 py-2.5 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-red-950">
-        Save article
+      </label>}
+      {state.error && <p role="alert" className="text-sm text-red-900">{state.error}</p>}
+      <button disabled={pending} className="w-fit bg-stone-950 px-5 py-2.5 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-red-950">
+        {pending ? "Saving…" : "Save article"}
       </button>
     </form>
   );

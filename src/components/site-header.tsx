@@ -19,7 +19,7 @@ export function SiteHeader({
       <div className="mx-auto flex max-w-7xl items-center justify-between border-b border-stone-200 px-4 py-3 text-xs uppercase tracking-[0.18em] text-stone-600">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <Newspaper className="h-4 w-4" />
-          Saturday, June 13, 2026
+          {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })}
         </Link>
         <div className="flex items-center gap-3">
           {isAdmin ? (
@@ -28,7 +28,7 @@ export function SiteHeader({
               className="inline-flex items-center gap-1.5 border border-stone-900 px-3 py-1.5 text-stone-950 transition hover:bg-stone-950 hover:text-white"
             >
               <ShieldCheck className="h-3.5 w-3.5" />
-              Admin
+              Newsroom
             </Link>
           ) : null}
           {signedIn ? (

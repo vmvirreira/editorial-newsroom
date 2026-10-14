@@ -1,52 +1,61 @@
 # The Civic Ledger
 
-An editorial news site built with Next.js, Supabase, Google OAuth, and Vercel.
+An editorial news site built with Next.js 16, the shared Supabase Auth/Postgres backend, and Vercel.
 
-## Features
+Guests read live published stories. Writers create and edit their own unpublished stories, then submit them for review. Editors edit any story, publish, delete, and arrange stories on the newsroom board. Staff roles are granted by the Supabase project owner; signing in alone grants no publishing rights.
 
-- NYT-inspired publication layout with top categories, lead story, latest desk, category pages, and article pages.
-- Supabase-backed `categories`, `articles`, and `admin_profiles` tables.
-- Public read-only browsing for guests.
-- Google OAuth staff login through Supabase Auth.
-- Admin-only article creation and deletion through RLS-protected tables.
-- Demo content fallback when Supabase env vars are not configured.
+Articles combine main text and ordered text, audio, video, and link blocks. Audio/video players accept direct hosted media URLs; video also supports standard YouTube watch and youtu.be links. Media files must already be hosted at accessible URLs. Image and main text are optional when other content is supplied. Add transcripts or captioned video alongside media for accessibility.
 
-## Local Setup
+Editors drag cards between Drafts, For review, and Published. Dropping above another card sets its order. Up/Down buttons and status menus provide keyboard and touch alternatives. Changes persist through an atomic database function. Published ordering controls the homepage and category lists; the first featured story takes the lead. Future publish dates are hidden from guests until their scheduled time. Dates in the newsroom form are UTC.
+
+## Shared Supabase setup
+
+Use **vmvirreira’s Project**, reference `tfxgzairleefuhstleeo`, which already backs Dayboard and Gabriel. See [the verified shared-backend context](docs/shared-supabase.md).
+
+The newsroom migrations have been applied to the shared project. For a new database, run the complete idempotent `supabase/schema.sql`, or apply the migration files in chronological order. All objects are newsroom-prefixed, and this setup does not change other apps' tables, policies, roles, Auth Site URL, or email templates. It does not import generic legacy tables automatically.
+
+Email authentication is already enabled; Google is currently disabled. Add `https://editorial-newsroom.vercel.app/auth/callback` and any intended local/preview callback URLs to the existing Supabase Auth redirect allow-list. **Keep the shared project's current Auth Site URL.** The newsroom requests its own redirect URL per sign-in. Existing email templates may offer a magic link or a code; both paths are supported.
+
+Sign in at `/admin` using the same email as your other apps. The awaiting-access screen shows your account ID. Grant an app-specific role through the Supabase SQL editor:
+
+```sql
+insert into public.newsroom_staff_profiles (user_id, role)
+values ('AUTH_USER_ID', 'editor')
+on conflict (user_id) do update set role = excluded.role;
+```
+
+Use `writer` for contributors. Editors can write as well, so your own account needs only `editor`. Dayboard/Gabriel owners and admins do not automatically receive newsroom permissions. Staff cannot update their own roles. Both server actions and row-level policies enforce these rules.
+
+## Environment and Vercel
+
+Set these variables on the existing `vmv-projects/editorial-newsroom` project in Vercel:
+
+| Variable | Value |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://tfxgzairleefuhstleeo.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Shared project’s public publishable key; legacy `NEXT_PUBLIC_SUPABASE_ANON_KEY` is also accepted |
+| `NEXT_PUBLIC_SITE_URL` | `https://editorial-newsroom.vercel.app` |
+
+Use a public publishable or anon key; this app does not need a service-role key. Set the values for production, preview, and development as needed. Use a separate preview database if preview writes should be isolated. Redeploy after environment changes. The project uses Next.js auto-detection, root directory `.`, `npm ci`, and `npm run build`, with Node.js 24.
+
+Connect `vmvirreira/editorial-newsroom` to the existing Vercel project with `main` as its production branch. **Standard Protection** is configured in Vercel so production can be public while preview deployments remain protected.
+
+With no Supabase variables the site displays demo articles and disables staff access. With a configured database, an empty publication stays empty; database errors are reported rather than replaced by demo news.
+
+## Local setup and verification
 
 ```bash
-npm install
+npm ci
 cp .env.example .env.local
+# Fill .env.local with the same public project variables.
 npm run dev
 ```
 
-Open `http://localhost:3000`.
-
-## Supabase Setup
-
-1. Create a Supabase project.
-2. Run `supabase/schema.sql` in the Supabase SQL editor.
-3. Enable Google in Supabase Auth providers.
-4. Add these callback URLs in Supabase Auth settings:
-   - `http://localhost:3000/auth/callback`
-   - `https://your-vercel-domain.vercel.app/auth/callback`
-5. Add env vars locally and in Vercel:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `NEXT_PUBLIC_SITE_URL`
-6. Sign in once at `/admin`, copy the displayed user id, and insert it as an admin:
-
-```sql
-insert into public.admin_profiles (user_id)
-values ('your-auth-user-id');
-```
-
-## Deploy
-
-The app is Vercel-ready:
-
 ```bash
+npm run lint
+npx tsc --noEmit
+npm test
 npm run build
-npx vercel --prod
 ```
 
-Set the same Supabase env vars in Vercel before using the admin newsroom.
+Permission tests run the actual SQL schema and migration in a disposable PGlite PostgreSQL database, including writer restrictions, guest reads, scheduled publication, ownership protection, staff-role escalation, editor publication, atomic ordering, invalid media, idempotent setup, and isolation from other apps’ roles, data, and functions. They use a minimal Supabase-compatible `auth.uid()` fixture and do not contact or modify the real project.

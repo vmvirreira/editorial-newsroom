@@ -1,3 +1,4 @@
+import { ArticleContent } from "@/components/article-content";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
@@ -32,18 +33,19 @@ export default async function ArticlePage({
         <div className="mt-5 border-y border-stone-300 py-3 text-sm text-stone-600">
           By <span className="font-semibold text-stone-950">{article.author}</span>
         </div>
-        <Image
+        {article.image_url && <Image
           src={article.image_url}
           alt={article.image_alt}
           width={1400}
           height={820}
           priority
           className="mt-8 aspect-[1.7] w-full object-cover grayscale-[12%]"
-        />
+        />}
         <div className="mt-8 grid gap-6 font-serif text-xl leading-9 text-stone-900">
           {article.body.split("\n\n").map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
+          <ArticleContent blocks={article.content_blocks ?? []} />
         </div>
       </article>
     </main>
