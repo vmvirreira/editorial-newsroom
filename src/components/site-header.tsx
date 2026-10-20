@@ -52,7 +52,7 @@ export function SiteHeader({
           href="/"
           className="font-serif text-5xl font-black tracking-[-0.05em] text-stone-950 sm:text-7xl"
         >
-          The Civic Ledger
+          The Brief and Beyond
         </Link>
       </div>
       <nav className="mx-auto flex max-w-7xl gap-5 overflow-x-auto border-t border-stone-300 px-4 py-3 text-sm font-semibold text-stone-800">

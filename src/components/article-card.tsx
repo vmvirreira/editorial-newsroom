@@ -1,3 +1,5 @@
+import { StoryListen } from "@/components/story-listen";
+import { storyNarration } from "@/lib/speech/story-speech";
 import Image from "next/image";
 import Link from "next/link";
 import type { Article } from "@/lib/types";
@@ -63,6 +65,7 @@ export function ArticleCard({
         >
           {article.dek}
         </p>
+        <StoryListen id={article.id} title={article.title} text={storyNarration(article)} compact />
         <p className="mt-4 text-xs uppercase tracking-[0.14em] text-stone-500">
           {article.source_name ? `Curated · ${article.source_name}` : `By ${article.author}`}
         </p>

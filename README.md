@@ -1,4 +1,4 @@
-# The Civic Ledger
+# The Brief and Beyond
 
 An editorial news site built with Next.js 16, the shared Supabase Auth/Postgres backend, and Vercel.
 
@@ -67,3 +67,7 @@ Open `/admin/curation` or choose **Curate news** from the editor desk. Refresh s
 Filter by category, read the source, dismiss or restore suggestions, and choose **Prepare draft** to create an attributed link story. Draft preparation is atomic and idempotent. Existing source URLs are deduplicated, and refresh never resurrects dismissed stories. Prepared drafts stay private until an editor publishes using the existing newsroom form or board. New content may include original commentary and the existing text/audio/video/link blocks. Full source articles and media are never imported; verify reuse permissions for any additional material. Source name, URL, and source publication time are retained independently of editable story text and shown on published pages.
 
 The curation table and RPC use app-specific editor checks and RLS. Guests and writers cannot access the inbox. Source fetching uses a fixed URL allow-list, HTTPS article host checks, redirect rejection, timeouts, payload limits, and XML entity rejection. Failed feeds do not remove saved suggestions. Tests additionally cover malicious and stale feeds, URL validation, source attribution, draft idempotency, and curation access control.
+
+## Listen to stories
+
+Every public story card has a speaker icon, and each article has a **Listen to this story** button. Playback uses the browser Speech Synthesis API and its default voice for the page language. Readers can pause, resume, or stop; starting another story replaces the previous one, and navigating to another page stops narration. Long stories are split into short utterances. Unsupported browsers show a disabled control. Voice quality and availability depend on the browser/device and may use the platform’s speech service. No external source article is fetched or narrated, no audio file is stored, and no speech API key or paid generation service is required.
