@@ -64,14 +64,26 @@ export async function fetchSource(source: CurationSource): Promise<FeedStory[]> 
   } finally { reader.releaseLock(); }
   return parseFeed(Buffer.concat(chunks).toString("utf8"), source);
 }
+export function mergeFeedStories(batches: FeedStory[][], limit = 96): FeedStory[] {
+  const stories: FeedStory[] = []; const seen = new Set<string>();
+  // Round-robin gives every source a place before taking more from a single desk.
+  for (let position = 0; position < 8 && stories.length < limit; position++) {
+    for (const batch of batches) {
+      const story = batch[position];
+      if (story && !seen.has(story.source_url)) { stories.push(story); seen.add(story.source_url); }
+      if (stories.length >= limit) break;
+    }
+  }
+  return stories;
+}
 export async function collectSuggestions() {
   const { CURATION_SOURCES } = await import("./sources.ts");
   const results = await Promise.allSettled(CURATION_SOURCES.map(fetchSource));
-  const stories: FeedStory[] = []; const unavailable: string[] = []; const seen = new Set<string>();
+  const batches: FeedStory[][] = []; const unavailable: string[] = [];
   results.forEach((result, index) => {
     const source = CURATION_SOURCES[index];
     if (result.status === "rejected") { unavailable.push(`${source.name} (${source.category})`); return; }
-    for (const story of result.value) if (!seen.has(story.source_url)) { stories.push(story); seen.add(story.source_url); }
+    batches.push(result.value);
   });
-  return { stories, unavailable };
+  return { stories: mergeFeedStories(batches), unavailable };
 }
