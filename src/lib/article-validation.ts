@@ -3,7 +3,7 @@ import { z } from "zod";
 export const httpUrl = z.string().url().max(2048).refine((url) => /^https?:\/\//i.test(url), "Use an HTTP or HTTPS URL.");
 export const contentBlockSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("text"), text: z.string().trim().min(1).max(50000) }),
-  ...(["audio", "video", "link"] as const).map((type) => z.object({ type: z.literal(type), url: httpUrl, caption: z.string().max(500).default("") })),
+  ...(["audio", "video", "link", "explainer"] as const).map((type) => z.object({ type: z.literal(type), url: httpUrl, caption: z.string().max(500).default("") })),
 ]);
 export const articleSchema = z.object({
   id: z.string().uuid().optional(),

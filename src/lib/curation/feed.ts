@@ -6,6 +6,7 @@ export type FeedStory = {
   source_name: string;
   source_url: string;
   headline: string;
+  source_preview: string;
   source_published_at: string;
   category_slug: string;
 };
@@ -16,7 +17,7 @@ const parser = new XMLParser({ ignoreAttributes: false, processEntities: false, 
 
 function text(value: unknown): string {
   if (typeof value !== "string") return "";
-  return value.replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&apos;|&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/\s+/g, " ").trim();
+  return value.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "").replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&apos;|&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#(x[0-9a-f]+|[0-9]+);/gi, (_, code) => { const point = code[0].toLowerCase() === "x" ? parseInt(code.slice(1), 16) : Number(code); return point > 0 && point <= 0x10ffff ? String.fromCodePoint(point) : ""; }).replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
 }
 export function canonicalSourceUrl(value: unknown, source: CurationSource): string | null {
   if (typeof value !== "string") return null;
@@ -42,7 +43,7 @@ export function parseFeed(xml: string, source: CurationSource, now = Date.now())
     const timestamp = Date.parse(typeof item.pubDate === "string" ? item.pubDate : "");
     if (!source_url || headline.length < 3 || !Number.isFinite(timestamp) || timestamp > now + 300_000 || now - timestamp > MAX_AGE_MS || seen.has(source_url)) return [];
     seen.add(source_url);
-    return [{ source_id: source.id, source_name: source.name, source_url, headline, source_published_at: new Date(timestamp).toISOString(), category_slug: source.category }];
+    return [{ source_id: source.id, source_name: source.name, source_url, headline, source_preview: text(item.description).slice(0, 1000), source_published_at: new Date(timestamp).toISOString(), category_slug: source.category }];
   }).sort((a, b) => b.source_published_at.localeCompare(a.source_published_at)).slice(0, 8);
 }
 export async function fetchSource(source: CurationSource): Promise<FeedStory[]> {
