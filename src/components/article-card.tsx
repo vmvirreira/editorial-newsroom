@@ -22,7 +22,7 @@ export function ArticleCard({
     <article
       className={
         isLead
-          ? `grid gap-5 border-b border-stone-300 pb-6 ${article.image_url ? "lg:grid-cols-[1.2fr_0.8fr]" : ""}`
+          ? `grid grid-cols-1 gap-5 border-b border-stone-300 pb-6 ${article.image_url ? "lg:grid-cols-[1.2fr_0.8fr]" : ""}`
           : "border-b border-stone-300 pb-5"
       }
     >
@@ -39,7 +39,7 @@ export function ArticleCard({
           className="aspect-[1.45] h-full w-full object-cover grayscale-[18%] transition duration-500 hover:scale-[1.02]"
         />}
       </Link>
-      <div className={isLead ? "flex flex-col justify-center" : ""}>
+      <div className={`min-w-0 [overflow-wrap:anywhere] ${isLead ? "flex flex-col justify-center" : ""}`}>
         <Link
           href={`/category/${article.category_slug}`}
           className="mb-2 inline-block text-xs font-bold uppercase tracking-[0.16em] text-red-900"

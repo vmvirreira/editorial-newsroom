@@ -35,8 +35,8 @@ export default async function Home() {
         signedIn={Boolean(user)}
         isAdmin={Boolean(staff?.data)}
       />
-      <section className="mx-auto grid max-w-7xl gap-8 px-4 py-8 lg:grid-cols-[1fr_320px]">
-        <section aria-label="Top stories" className="grid content-start gap-8">
+      <section className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1fr_320px]">
+        <section aria-label="Top stories" className="grid min-w-0 grid-cols-1 content-start gap-8">
           {mainStories.map((article, index) => (
             <ArticleCard
               key={article.id}
