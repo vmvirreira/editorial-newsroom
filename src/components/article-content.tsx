@@ -9,6 +9,7 @@ function youtubeEmbed(url: string) {
 }
 export function ArticleContent({ blocks }: { blocks: ContentBlock[] }) {
   return <div className="grid gap-6">{blocks.map((block, index) => {
+    if (block.type === "explainer") return null;
     if (block.type === "text") return <div key={index} className="grid gap-6">{block.text.split("\n\n").map((text, i) => <p key={i}>{text}</p>)}</div>;
     if (!/^https?:\/\//i.test(block.url)) return null;
     const embed = block.type === "video" ? youtubeEmbed(block.url) : null;
@@ -21,4 +22,10 @@ export function ArticleContent({ blocks }: { blocks: ContentBlock[] }) {
       </>}
     </figure>;
   })}</div>;
+}
+
+export function ArticleExplainers({ blocks }: { blocks: ContentBlock[] }) {
+  const explainers = blocks.filter((block): block is Extract<ContentBlock, { type: "explainer" }> => block.type === "explainer" && /^https?:\/\//i.test(block.url));
+  if (!explainers.length) return null;
+  return <aside aria-label="Explore the background" className="mt-6 border-l-4 border-red-900 bg-stone-100 p-5"><h2 className="font-serif text-2xl font-bold">Explore the background</h2><p className="mt-1 text-sm text-stone-600">People, places, and ideas behind this story.</p><ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2">{explainers.map((block,index)=><li key={index}><a href={block.url} target="_blank" rel="noopener noreferrer" className="font-semibold underline underline-offset-4">{block.caption || "Background explainer"} ↗</a></li>)}</ul></aside>;
 }

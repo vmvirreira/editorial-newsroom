@@ -1,6 +1,6 @@
 export type StaffRole = "writer" | "editor";
 export type ArticleStatus = "draft" | "review" | "published";
-export type ContentBlock = { type: "text"; text: string } | { type: "audio" | "video" | "link"; url: string; caption: string };
+export type ContentBlock = { type: "text"; text: string } | { type: "audio" | "video" | "link"; url: string; caption: string } | { type: "explainer"; url: string; caption: string };
 
 export type Category = {
   id: string;

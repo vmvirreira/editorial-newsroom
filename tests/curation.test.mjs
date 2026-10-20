@@ -7,14 +7,15 @@ import { parseFeed, canonicalSourceUrl } from '../src/lib/curation/feed.ts';
 
 const source = { id: 'bbc-world', name: 'BBC News', category: 'world', hosts: ['bbc.com', 'bbc.co.uk'] };
 const now = Date.parse('2026-10-20T12:00:00Z');
-const item = (url, title = '<![CDATA[A useful headline]]>', date = 'Tue, 20 Oct 2026 10:00:00 GMT') => `<item><title>${title}</title><link>${url.replaceAll('&', '&amp;')}</link><pubDate>${date}</pubDate><description>DO NOT COPY ARTICLE TEXT</description></item>`;
+const item = (url, title = '<![CDATA[A useful headline]]>', date = 'Tue, 20 Oct 2026 10:00:00 GMT') => `<item><title>${title}</title><link>${url.replaceAll('&', '&amp;')}</link><pubDate>${date}</pubDate><description>A short feed summary.</description></item>`;
 const rss = items => `<rss version="2.0"><channel>${items}</channel></rss>`;
 test('RSS imports only recent headlines and source links, canonicalizes and deduplicates', () => {
   const result = parseFeed(rss(item('https://www.bbc.com/news/123?utm_source=rss#top', '<![CDATA[<b>News</b> &amp; context]]>') + item('https://www.bbc.com/news/123') + item('https://evil.example/x') + item('https://www.bbc.com/old', 'Old story', 'Mon, 01 Sep 2025 10:00:00 GMT') + item('https://www.bbc.com/future', 'Future story', 'Tue, 20 Oct 2026 13:00:00 GMT')), source, now);
   assert.equal(result.length, 1);
   assert.equal(result[0].headline, 'News & context');
   assert.equal(result[0].source_url, 'https://www.bbc.com/news/123');
-  assert.equal(JSON.stringify(result).includes('DO NOT COPY'), false);
+  assert.equal(result[0].source_preview, 'A short feed summary.');
+  assert.equal('body' in result[0], false);
 });
 test('RSS rejects entities, malformed and oversized payloads', () => {
   for (const xml of ['<!DOCTYPE rss [<!ENTITY x SYSTEM "file:///etc/passwd">]><rss/>', '<rss><channel></rss>', 'x'.repeat(1_000_001)]) assert.throws(() => parseFeed(xml, source, now));
@@ -79,6 +80,30 @@ test('Curation SQL keeps suggestions editor-only and creates one private attribu
     await db.exec(rebrand);
     branded = (await db.query('select author,dek from public.newsroom_articles where id=$1', [first])).rows[0];
     assert.deepEqual(branded, {author:'Victor',dek:'My edited story introduction'});
+    await db.exec('reset role');
+    const enrichFile = files.find(file => file.endsWith('_newsroom_source_previews_explainers.sql'));
+    await db.exec(await readFile(new URL(`../supabase/migrations/${enrichFile}`, import.meta.url), 'utf8'));
+    await asUser('authenticated', editor);
+    const category = (await db.query("select id from public.newsroom_categories where slug='science'")).rows[0].id;
+    const batch = [{category_id:category,source_id:'nasa-science',source_name:'NASA',source_url:'https://nasa.gov/news/fixture',headline:'NASA mission to Mars',source_published_at:'2026-10-20T10:00:00Z',source_preview:'An agency-provided feed summary.'}];
+    assert.equal((await db.query('select public.newsroom_refresh_source_previews($1::jsonb) as n',[JSON.stringify(batch)])).rows[0].n,1);
+    const nextSuggestion = (await db.query("select id from public.newsroom_suggestions where source_id='nasa-science'")).rows[0].id;
+    await db.query("update public.newsroom_suggestions set status='dismissed' where id=$1",[nextSuggestion]);
+    batch[0].source_preview='Updated source preview';
+    assert.equal((await db.query('select public.newsroom_refresh_source_previews($1::jsonb) as n',[JSON.stringify(batch)])).rows[0].n,0);
+    assert.deepEqual((await db.query('select status,source_preview from public.newsroom_suggestions where id=$1',[nextSuggestion])).rows[0],{status:'dismissed',source_preview:'Updated source preview'});
+    await db.query("update public.newsroom_suggestions set status='new' where id=$1",[nextSuggestion]);
+    const topics=[{title:'Mars',url:'https://en.wikipedia.org/wiki/Mars'}];
+    const enriched=(await db.query('select public.newsroom_prepare_brief($1,$2,$3::jsonb) as id',[nextSuggestion,'An editor-reviewed brief about the NASA mission.',JSON.stringify(topics)])).rows[0].id;
+    const again=(await db.query('select public.newsroom_prepare_brief($1,$2,$3::jsonb) as id',[nextSuggestion,'A different summary must not overwrite an existing draft.',JSON.stringify([])])).rows[0].id;
+    assert.equal(enriched,again);
+    const saved=(await db.query('select status,dek,body,content_blocks from public.newsroom_articles where id=$1',[enriched])).rows[0];
+    assert.equal(saved.status,'draft');assert.equal(saved.body,'');assert.equal(saved.dek,'An editor-reviewed brief about the NASA mission.');
+    assert.deepEqual(saved.content_blocks[1],{type:'explainer',url:topics[0].url,caption:'Mars'});
+    await assert.rejects(db.query('select public.newsroom_prepare_brief($1,$2,$3::jsonb)',[nextSuggestion,'A valid brief',[{title:'Bad',url:'javascript:alert(1)'}]]));
+    await asUser('authenticated',writer);
+    await assert.rejects(db.query('select public.newsroom_refresh_source_previews($1::jsonb)',[JSON.stringify(batch)]));
+    await assert.rejects(db.query('select public.newsroom_prepare_brief($1,$2,$3::jsonb)',[nextSuggestion,'A valid short summary','[]']));
     await asUser('anon'); assert.equal((await db.query('select * from public.newsroom_articles')).rows.length, 0);
     await db.exec('reset role'); assert.deepEqual((await db.query('select * from public.dayboard_fixture')).rows, [{ id: 42 }]);
   } finally { await db.close(); }

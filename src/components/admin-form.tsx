@@ -133,7 +133,7 @@ export function AdminForm({ categories, article, role }: AdminFormProps) {
           className="border border-stone-300 px-3 py-2 font-normal outline-none focus:border-stone-950"
         />
       </label>
-      <ContentEditor initialBlocks={article?.content_blocks} />
+      <ContentEditor initialBlocks={article?.content_blocks} headline={article?.title} />
       {role === "editor" && <label className="inline-flex items-center gap-2 text-sm font-semibold text-stone-800">
         <input
           type="checkbox"
