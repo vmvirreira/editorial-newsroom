@@ -12,7 +12,7 @@ Editors drag cards between Drafts, For review, and Published. Dropping above ano
 
 Use **vmvirreira’s Project**, reference `tfxgzairleefuhstleeo`, which already backs Dayboard and Gabriel. See [the verified shared-backend context](docs/shared-supabase.md).
 
-The newsroom migrations have been applied to the shared project. For a new database, run the complete idempotent `supabase/schema.sql`, or apply the migration files in chronological order. All objects are newsroom-prefixed, and this setup does not change other apps' tables, policies, roles, Auth Site URL, or email templates. It does not import generic legacy tables automatically.
+The newsroom migrations have been applied to the shared project. For a new database, apply all migration files in chronological order. `supabase/schema.sql` is the idempotent baseline for the original newsroom; curation is added by the subsequent migration. All objects are newsroom-prefixed, and this setup does not change other apps' tables, policies, roles, Auth Site URL, or email templates. It does not import generic legacy tables automatically.
 
 Email authentication is already enabled; Google is currently disabled. Add `https://editorial-newsroom.vercel.app/auth/callback` and any intended local/preview callback URLs to the existing Supabase Auth redirect allow-list. **Keep the shared project's current Auth Site URL.** The newsroom requests its own redirect URL per sign-in. Existing email templates may offer a magic link or a code; both paths are supported.
 
@@ -59,3 +59,11 @@ npm run build
 ```
 
 Permission tests run the actual SQL schema and migration in a disposable PGlite PostgreSQL database, including writer restrictions, guest reads, scheduled publication, ownership protection, staff-role escalation, editor publication, atomic ordering, invalid media, idempotent setup, and isolation from other apps’ roles, data, and functions. They use a minimal Supabase-compatible `auth.uid()` fixture and do not contact or modify the real project.
+
+## Editor curation
+
+Open `/admin/curation` or choose **Curate news** from the editor desk. Refresh sources checks the fixed, reviewed RSS registry in `src/lib/curation/sources.ts`; it needs no extra environment variables, API keys, AI service, or service-role credential. BBC News covers all six sections (Politics currently uses its UK desk); NASA adds primary science releases. Feed results are cached for 15 minutes, limited to eight recent entries per feed, and restricted to the last 14 days. There is no scheduled polling.
+
+Filter by category, read the source, dismiss or restore suggestions, and choose **Prepare draft** to create an attributed link story. Draft preparation is atomic and idempotent. Existing source URLs are deduplicated, and refresh never resurrects dismissed stories. Prepared drafts stay private until an editor publishes using the existing newsroom form or board. New content may include original commentary and the existing text/audio/video/link blocks. Full source articles and media are never imported; verify reuse permissions for any additional material. Source name, URL, and source publication time are retained independently of editable story text and shown on published pages.
+
+The curation table and RPC use app-specific editor checks and RLS. Guests and writers cannot access the inbox. Source fetching uses a fixed URL allow-list, HTTPS article host checks, redirect rejection, timeouts, payload limits, and XML entity rejection. Failed feeds do not remove saved suggestions. Tests additionally cover malicious and stale feeds, URL validation, source attribution, draft idempotency, and curation access control.
