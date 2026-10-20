@@ -68,6 +68,17 @@ test('Curation SQL keeps suggestions editor-only and creates one private attribu
     assert.equal(article.image_url, ''); assert.equal(article.content_blocks[0].type, 'link'); assert.equal(article.content_blocks[0].url, article.source_url);
     const { articleSchema } = await import('../src/lib/article-validation.ts');
     assert.equal(articleSchema.safeParse({ ...article, published_at: article.published_at.toISOString() }).success, true);
+    await db.exec('reset role');
+    const brandFile = files.find(file => file.endsWith('_newsroom_brief_beyond_brand.sql'));
+    const rebrand = await readFile(new URL(`../supabase/migrations/${brandFile}`, import.meta.url), 'utf8');
+    await db.exec(rebrand);
+    let branded = (await db.query('select author,dek from public.newsroom_articles where id=$1', [first])).rows[0];
+    assert.equal(branded.author, 'The Brief and Beyond curation desk');
+    assert.ok(branded.dek.includes('selected by The Brief and Beyond.'));
+    await db.query('update public.newsroom_articles set author=$1,dek=$2 where id=$3', ['Victor', 'My edited story introduction', first]);
+    await db.exec(rebrand);
+    branded = (await db.query('select author,dek from public.newsroom_articles where id=$1', [first])).rows[0];
+    assert.deepEqual(branded, {author:'Victor',dek:'My edited story introduction'});
     await asUser('anon'); assert.equal((await db.query('select * from public.newsroom_articles')).rows.length, 0);
     await db.exec('reset role'); assert.deepEqual((await db.query('select * from public.dayboard_fixture')).rows, [{ id: 42 }]);
   } finally { await db.close(); }

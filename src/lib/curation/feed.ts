@@ -46,7 +46,7 @@ export function parseFeed(xml: string, source: CurationSource, now = Date.now())
   }).sort((a, b) => b.source_published_at.localeCompare(a.source_published_at)).slice(0, 8);
 }
 export async function fetchSource(source: CurationSource): Promise<FeedStory[]> {
-  const response = await fetch(source.url, { redirect: "error", signal: AbortSignal.timeout(10_000), headers: { "User-Agent": "CivicLedger/1.0 (editorial RSS curation)", Accept: "application/rss+xml, application/xml, text/xml" }, next: { revalidate: 900 } });
+  const response = await fetch(source.url, { redirect: "error", signal: AbortSignal.timeout(10_000), headers: { "User-Agent": "BriefAndBeyond/1.0 (editorial RSS curation)", Accept: "application/rss+xml, application/xml, text/xml" }, next: { revalidate: 900 } });
   if (!response.ok || !response.body) throw new Error("Source unavailable.");
   const declaredSize = Number(response.headers.get("content-length"));
   if (declaredSize > MAX_BYTES) throw new Error("Feed too large.");
