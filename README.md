@@ -87,3 +87,10 @@ Homepage and category story cards show selected background links. When editors h
 The masthead clock updates every second and displays the reader's local date, time, and timezone after hydration. The reading break offers Quote/Joke/Poem tabs using the same attributed textr-backed feed as etherLAND SCREENS, refreshed hourly. Public-domain excerpts and an original newsroom joke keep the feature usable if the feed is unavailable.
 
 US ZIP weather uses Zippopotam.us/GeoNames for location and National Weather Service forecasts for today and up to seven days. Forecasts are cached for 30 minutes, use Fahrenheit, and preserve missing highs/lows instead of inventing them. The visitor's chosen ZIP is remembered only in this browser's local storage; Forget ZIP removes it. Readers do not need accounts, and storage-disabled browsers retain the selection for the current session. Weather and reading requests run independently of the news page, with loading/error/fallback states and source attribution. No additional environment variables are required.
+
+
+### Masthead weather and video discovery
+
+Main-section headlines are 28px on phones and 30px on larger screens, compared with 24px in The Latest. The category navigation includes an icon and today's forecast temperature on its right, using the same saved ZIP and shared request as the weather panel. Set ZIP opens the homepage weather panel; changing or forgetting the ZIP updates both displays.
+
+In a story's Additional content section, Find a YouTube video searches YouTube in a new tab using the headline or edited keywords. Paste a chosen video's link, preview it, add a caption, and choose Add video to story. Save the story to persist the new video block; move or remove it with the existing block controls. Watch, share, Shorts, live, and embed URLs normalize to one canonical video URL, and public stories use YouTube's privacy-enhanced embed domain. Search results are viewed on YouTube; no YouTube API key is needed.

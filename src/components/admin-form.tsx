@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { ContentEditor } from "./content-editor";
 import { saveArticle } from "@/app/actions";
 import type { Article, Category, StaffRole } from "@/lib/types";
@@ -13,6 +13,7 @@ type AdminFormProps = {
 
 export function AdminForm({ categories, article, role }: AdminFormProps) {
   const [state, action, pending] = useActionState(saveArticle, { error: "" });
+  const [headline, setHeadline] = useState(article?.title ?? "");
   const now = new Date().toISOString().slice(0, 16);
 
   return (
@@ -28,7 +29,8 @@ export function AdminForm({ categories, article, role }: AdminFormProps) {
           <input
             required
             name="title"
-            defaultValue={article?.title}
+            value={headline}
+            onChange={event => setHeadline(event.target.value)}
             className="border border-stone-300 px-3 py-2 font-normal outline-none focus:border-stone-950"
           />
         </label>
@@ -133,7 +135,7 @@ export function AdminForm({ categories, article, role }: AdminFormProps) {
           className="border border-stone-300 px-3 py-2 font-normal outline-none focus:border-stone-950"
         />
       </label>
-      <ContentEditor initialBlocks={article?.content_blocks} headline={article?.title} />
+      <ContentEditor initialBlocks={article?.content_blocks} headline={headline} />
       {role === "editor" && <label className="inline-flex items-center gap-2 text-sm font-semibold text-stone-800">
         <input
           type="checkbox"

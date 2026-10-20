@@ -1,12 +1,6 @@
 import type { ContentBlock } from "@/lib/types";
+import { youtubeEmbed } from "@/lib/media/youtube";
 
-function youtubeEmbed(url: string) {
-  try {
-    const parsed = new URL(url);
-    const id = parsed.hostname === "youtu.be" ? parsed.pathname.slice(1) : ["youtube.com", "www.youtube.com", "m.youtube.com"].includes(parsed.hostname) ? parsed.searchParams.get("v") : null;
-    return id && /^[a-zA-Z0-9_-]{11}$/.test(id) ? `https://www.youtube-nocookie.com/embed/${id}` : null;
-  } catch { return null; }
-}
 export function ArticleContent({ blocks }: { blocks: ContentBlock[] }) {
   return <div className="grid gap-6">{blocks.map((block, index) => {
     if (block.type === "explainer") return null;

@@ -1,6 +1,7 @@
 "use client";
 
 import { WikipediaPicker } from "./wikipedia-picker";
+import { YouTubePicker } from "./youtube-picker";
 import { useState } from "react";
 import type { ContentBlock } from "@/lib/types";
 
@@ -18,6 +19,7 @@ export function ContentEditor({ initialBlocks = [], headline = "" }: { initialBl
     <h3 className="font-serif text-2xl font-bold">Additional content</h3>
     <p className="text-sm text-stone-600">Combine text, audio, video, and source links. Use direct media URLs for players, or a YouTube URL for video. Blocks appear below the main text in this order.</p>
     <WikipediaPicker headline={headline} value={blocks.filter(block=>block.type === "explainer").map(block=>({ title:block.caption, url:block.url }))} onChange={topics=>setBlocks(current=>[...current.filter(block=>block.type!=="explainer"), ...topics.map(topic=>({type:"explainer" as const,url:topic.url,caption:topic.title}))])} />
+    <YouTubePicker headline={headline} disabled={blocks.length >= 100} existingUrls={blocks.flatMap(block => block.type === "video" ? [block.url] : [])} onAdd={video => setBlocks(current => current.length >= 100 ? current : [...current, { type: "video", ...video }])} />
     {blocks.map((block, index) => <fieldset key={index} className="grid gap-3 border border-stone-300 p-4">
       <legend className="px-2 text-sm font-bold">{index + 1}. {block.type}</legend>
       {block.type === "text" ? <label>Text<textarea required className={inputClass} rows={4} value={block.text} onChange={(e) => replace(index, { ...block, text: e.target.value })} /></label> : <>
