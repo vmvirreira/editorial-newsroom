@@ -45,7 +45,9 @@ test('Expanded curation balances every source and stays within the database batc
 test('Every story card can render selected explainers or a clearly labeled Wikipedia search',async()=>{
  const source=await readFile(new URL('../src/components/article-content.tsx',import.meta.url),'utf8');
  const output=transpileModule(source,{compilerOptions:{module:ModuleKind.CommonJS,jsx:JsxEmit.ReactJSX}}).outputText;
- const compiledModule={exports:{}};Function('require','module','exports',output)(createRequire(import.meta.url),compiledModule,compiledModule.exports);
+ const compiledModule={exports:{}};const require=createRequire(import.meta.url);
+ const media=await import('../src/lib/media/youtube.ts');
+ Function('require','module','exports',output)(name=>name==='@/lib/media/youtube'?media:require(name),compiledModule,compiledModule.exports);
  const fallback=renderToStaticMarkup(createElement(compiledModule.exports.ArticleExplainers,{blocks:[],compact:true,headline:'NASA mission to Mars'}));
  assert.ok(fallback.includes('Explore the background'));assert.ok(fallback.includes('Search Wikipedia for background'));assert.ok(fallback.includes('search=NASA+mission+to+Mars'));
  const selected=renderToStaticMarkup(createElement(compiledModule.exports.ArticleExplainers,{blocks:[{type:'explainer',url:'https://en.wikipedia.org/wiki/NASA',caption:'NASA'}],compact:true,headline:'NASA mission'}));

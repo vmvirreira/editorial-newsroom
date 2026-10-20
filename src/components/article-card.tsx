@@ -50,7 +50,7 @@ export function ArticleCard({
           <h2
             className={
               isLead
-                ? "font-serif text-4xl font-black leading-[0.95] tracking-[-0.035em] text-stone-950 group-hover:text-red-950 sm:text-6xl"
+                ? "font-serif text-[1.75rem] font-bold leading-tight tracking-[-0.025em] text-stone-950 group-hover:text-red-950 sm:text-3xl"
                 : "font-serif text-2xl font-bold leading-tight tracking-[-0.02em] text-stone-950 group-hover:text-red-950"
             }
           >

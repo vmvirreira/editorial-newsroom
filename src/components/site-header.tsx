@@ -1,4 +1,5 @@
 import { MastheadClock } from "./masthead-clock";
+import { MastheadWeather } from "./masthead-weather";
 import Link from "next/link";
 import { Newspaper, ShieldCheck } from "lucide-react";
 import { signOut } from "@/app/actions";
@@ -56,7 +57,8 @@ export function SiteHeader({
           The Brief and Beyond
         </Link>
       </div>
-      <nav className="mx-auto flex max-w-7xl gap-5 overflow-x-auto border-t border-stone-300 px-4 py-3 text-sm font-semibold text-stone-800">
+      <div className="mx-auto flex max-w-7xl items-center gap-4 border-t border-stone-300 px-4 py-3">
+      <nav aria-label="News categories" className="flex min-w-0 flex-1 gap-5 overflow-x-auto text-sm font-semibold text-stone-800">
         {categories.map((category) => (
           <Link
             key={category.id}
@@ -67,6 +69,8 @@ export function SiteHeader({
           </Link>
         ))}
       </nav>
+      <MastheadWeather />
+      </div>
     </header>
   );
 }
