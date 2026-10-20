@@ -19,8 +19,8 @@ export default async function Home() {
     ? await supabase?.from("newsroom_staff_profiles").select("role").eq("user_id", user.id).maybeSingle()
     : null;
 
-  const lead = articles.find((article) => article.is_featured) ?? articles[0];
-  const secondary = articles.filter((article) => article.id !== lead?.id);
+  const mainStories = articles.slice(0, 3);
+  const latestStories = articles.slice(3);
   const grouped = categories.map((category) => ({
     category,
     articles: articles
@@ -36,12 +36,21 @@ export default async function Home() {
         isAdmin={Boolean(staff?.data)}
       />
       <section className="mx-auto grid max-w-7xl gap-8 px-4 py-8 lg:grid-cols-[1fr_320px]">
-        <div>{lead ? <ArticleCard article={lead} priority variant="lead" /> : null}</div>
-        <aside className="grid content-start gap-5 border-l-0 border-stone-300 lg:border-l lg:pl-6">
-          <h2 className="border-b border-stone-950 pb-2 font-serif text-2xl font-black">
+        <section aria-label="Top stories" className="grid content-start gap-8">
+          {mainStories.map((article, index) => (
+            <ArticleCard
+              key={article.id}
+              article={article}
+              priority={index === 0}
+              variant="lead"
+            />
+          ))}
+        </section>
+        <aside aria-labelledby="latest-heading" className="grid content-start gap-5 border-l-0 border-stone-300 lg:border-l lg:pl-6">
+          <h2 id="latest-heading" className="border-b border-stone-950 pb-2 font-serif text-2xl font-black">
             The Latest
           </h2>
-          {secondary.slice(0, 4).map((article) => (
+          {latestStories.map((article) => (
             <ArticleCard key={article.id} article={article} />
           ))}
         </aside>
