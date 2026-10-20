@@ -24,8 +24,12 @@ export function ArticleContent({ blocks }: { blocks: ContentBlock[] }) {
   })}</div>;
 }
 
-export function ArticleExplainers({ blocks }: { blocks: ContentBlock[] }) {
+export function ArticleExplainers({ blocks, compact = false, headline = "" }: { blocks: ContentBlock[]; compact?: boolean; headline?: string }) {
   const explainers = blocks.filter((block): block is Extract<ContentBlock, { type: "explainer" }> => block.type === "explainer" && /^https?:\/\//i.test(block.url));
-  if (!explainers.length) return null;
-  return <aside aria-label="Explore the background" className="mt-6 border-l-4 border-red-900 bg-stone-100 p-5"><h2 className="font-serif text-2xl font-bold">Explore the background</h2><p className="mt-1 text-sm text-stone-600">People, places, and ideas behind this story.</p><ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2">{explainers.map((block,index)=><li key={index}><a href={block.url} target="_blank" rel="noopener noreferrer" className="font-semibold underline underline-offset-4">{block.caption || "Background explainer"} ↗</a></li>)}</ul></aside>;
+  if (!explainers.length && !headline) return null;
+  return <aside aria-label="Explore the background" className={compact ? "mt-4 border-l-2 border-red-900 bg-stone-100 px-3 py-3" : "mt-6 border-l-4 border-red-900 bg-stone-100 p-5"}>
+    {compact ? <h3 className="text-xs font-bold uppercase tracking-wide text-stone-800">Explore the background</h3> : <h2 className="font-serif text-2xl font-bold">Explore the background</h2>}
+    {!compact && <p className="mt-1 text-sm text-stone-600">People, places, and ideas behind this story.</p>}
+    {explainers.length ? <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-sm">{explainers.map((block,index)=><li key={index}><a href={block.url} target="_blank" rel="noopener noreferrer" className="font-semibold underline underline-offset-4">{block.caption || "Background explainer"} ↗</a></li>)}</ul> : <a href={`https://en.wikipedia.org/w/index.php?${new URLSearchParams({search:headline})}`} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm underline underline-offset-4">Search Wikipedia for background ↗</a>}
+  </aside>;
 }

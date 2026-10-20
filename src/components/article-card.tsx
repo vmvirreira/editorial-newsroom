@@ -1,3 +1,4 @@
+import { ArticleExplainers } from "./article-content";
 import { StoryListen } from "@/components/story-listen";
 import { storyNarration } from "@/lib/speech/story-speech";
 import Image from "next/image";
@@ -21,7 +22,7 @@ export function ArticleCard({
     <article
       className={
         isLead
-          ? "grid gap-5 border-b border-stone-300 pb-6 lg:grid-cols-[1.2fr_0.8fr]"
+          ? `grid gap-5 border-b border-stone-300 pb-6 ${article.image_url ? "lg:grid-cols-[1.2fr_0.8fr]" : ""}`
           : "border-b border-stone-300 pb-5"
       }
     >
@@ -65,6 +66,7 @@ export function ArticleCard({
         >
           {article.dek}
         </p>
+        <ArticleExplainers blocks={article.content_blocks ?? []} headline={article.title} compact />
         <StoryListen id={article.id} title={article.title} text={storyNarration(article)} compact />
         <p className="mt-4 text-xs uppercase tracking-[0.14em] text-stone-500">
           {article.source_name ? `Curated · ${article.source_name}` : `By ${article.author}`}

@@ -1,3 +1,4 @@
+import { MastheadClock } from "./masthead-clock";
 import Link from "next/link";
 import { Newspaper, ShieldCheck } from "lucide-react";
 import { signOut } from "@/app/actions";
@@ -16,10 +17,10 @@ export function SiteHeader({
 }: SiteHeaderProps) {
   return (
     <header className="border-b border-stone-300 bg-[#fbfaf7]">
-      <div className="mx-auto flex max-w-7xl items-center justify-between border-b border-stone-200 px-4 py-3 text-xs uppercase tracking-[0.18em] text-stone-600">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-b border-stone-200 px-4 py-3 text-xs uppercase tracking-[0.18em] text-stone-600">
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <Newspaper className="h-4 w-4" />
-          {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" })}
+          <Newspaper className="h-4 w-4 shrink-0" />
+          <MastheadClock initialIso={new Date().toISOString()} />
         </Link>
         <div className="flex items-center gap-3">
           {isAdmin ? (
