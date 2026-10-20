@@ -1,6 +1,7 @@
 import { ArticleExplainers } from "./article-content";
 import { StoryListen } from "@/components/story-listen";
 import { storyNarration } from "@/lib/speech/story-speech";
+import { youtubeEmbed } from "@/lib/media/youtube";
 import Image from "next/image";
 import Link from "next/link";
 import type { Article } from "@/lib/types";
@@ -17,6 +18,10 @@ export function ArticleCard({
   variant = "compact",
 }: ArticleCardProps) {
   const isLead = variant === "lead";
+  const video = (article.content_blocks ?? []).flatMap((block) => {
+    const embed = block.type === "video" ? youtubeEmbed(block.url) : null;
+    return embed && block.type === "video" ? [{ embed, caption: block.caption }] : [];
+  })[0];
 
   return (
     <article
@@ -66,6 +71,17 @@ export function ArticleCard({
         >
           {article.dek}
         </p>
+        {video && <figure className="mt-4 w-full max-w-sm">
+          <iframe
+            src={video.embed}
+            title={video.caption || `Video: ${article.title}`}
+            loading="lazy"
+            allow="fullscreen; picture-in-picture"
+            allowFullScreen
+            className="aspect-video w-full border-0"
+          />
+          {video.caption && <figcaption className="mt-2 text-xs leading-5 text-stone-600">{video.caption}</figcaption>}
+        </figure>}
         <ArticleExplainers blocks={article.content_blocks ?? []} headline={article.title} compact />
         <StoryListen id={article.id} title={article.title} text={storyNarration(article)} compact />
         <p className="mt-4 text-xs uppercase tracking-[0.14em] text-stone-500">

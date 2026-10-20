@@ -26,7 +26,7 @@ export default async function ArticlePage({
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-red-900">
           {article.category_name}
         </p>
-        <h1 className="mt-3 font-serif text-5xl font-black leading-[0.95] tracking-[-0.045em] sm:text-7xl">
+        <h1 className="mt-3 font-serif text-3xl font-bold leading-tight tracking-[-0.025em] sm:text-4xl">
           {article.title}
         </h1>
         <p className="mt-5 max-w-3xl text-xl leading-8 text-stone-700">
