@@ -6,7 +6,7 @@ Guests read live published stories. Writers create and edit their own unpublishe
 
 Articles combine main text and ordered text, audio, video, and link blocks. Audio/video players accept direct hosted media URLs; video also supports standard YouTube watch and youtu.be links. Media files must already be hosted at accessible URLs. Image and main text are optional when other content is supplied. Add transcripts or captioned video alongside media for accessibility.
 
-Editors drag cards between Drafts, For review, and Published. Dropping above another card sets its order. Up/Down buttons and status menus provide keyboard and touch alternatives. Changes persist through an atomic database function. Published ordering controls the homepage and category lists; the first featured story takes the lead. Future publish dates are hidden from guests until their scheduled time. Dates in the newsroom form are UTC.
+Editors drag cards between Drafts, For review, and Published. Dropping above another card sets its order. Up/Down buttons and status menus provide keyboard and touch alternatives. Changes persist through an atomic database function. Published ordering controls the homepage and category lists: the first three stories across all categories appear in the main section, and the remaining stories appear in The Latest. Future publish dates are hidden from guests until their scheduled time. Dates in the newsroom form are UTC.
 
 ## Shared Supabase setup
 
