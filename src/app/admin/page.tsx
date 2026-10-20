@@ -27,7 +27,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
     <section className="mx-auto grid max-w-7xl gap-8">
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-stone-950 pb-5">
         <div><p className="text-xs font-bold uppercase tracking-widest text-red-900">{role} · {user.email}</p><h1 className="font-serif text-5xl font-black">Newsroom Desk</h1></div>
-        <div className="flex gap-4"><Link href="/" className="underline">View site</Link><form action={signOut}><button className="underline">Sign out</button></form></div>
+        <div className="flex flex-wrap gap-4">{role === "editor" && <Link href="/admin/curation" className="font-bold underline">Curate news</Link>}<Link href="/" className="underline">View site</Link><form action={signOut}><button className="underline">Sign out</button></form></div>
       </div>
       {query.saved && <p role="status" className="border border-green-800 p-3 text-green-900">Article saved.</p>}
       <NewsroomBoard articles={articles} role={role} />

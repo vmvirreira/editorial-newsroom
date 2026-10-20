@@ -26,6 +26,9 @@ export type Article = {
   is_featured: boolean;
   published_at: string;
   updated_at: string;
+  source_name?: string | null;
+  source_url?: string | null;
+  source_published_at?: string | null;
   owner_id?: string | null;
   position?: number;
   content_blocks?: ContentBlock[];

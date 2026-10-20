@@ -20,6 +20,7 @@ export function AdminForm({ categories, article, role }: AdminFormProps) {
       action={action}
       className="grid gap-4 border border-stone-300 bg-white p-5 shadow-sm"
     >
+      {article?.source_url && <p className="border border-stone-300 bg-stone-50 p-3 text-sm leading-6">Curated from {article.source_name}. <a href={article.source_url} target="_blank" rel="noopener noreferrer" className="underline">Read the original report ↗</a>. Review the headline and add your own context before publishing. Source attribution stays with this story.</p>}
       <input type="hidden" name="id" defaultValue={article?.id} />
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-1 text-sm font-semibold text-stone-800">

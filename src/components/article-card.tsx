@@ -64,7 +64,7 @@ export function ArticleCard({
           {article.dek}
         </p>
         <p className="mt-4 text-xs uppercase tracking-[0.14em] text-stone-500">
-          By {article.author}
+          {article.source_name ? `Curated · ${article.source_name}` : `By ${article.author}`}
         </p>
       </div>
     </article>

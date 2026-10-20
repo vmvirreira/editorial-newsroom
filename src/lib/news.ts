@@ -14,6 +14,9 @@ type ArticleRow = {
   image_url: string;
   image_alt: string;
   status: ArticleStatus;
+  source_name: string | null;
+  source_url: string | null;
+  source_published_at: string | null;
   owner_id: string | null;
   position: number;
   content_blocks: ContentBlock[];
@@ -26,6 +29,9 @@ type ArticleRow = {
 function mapArticle(row: ArticleRow): Article {
   return {
     id: row.id,
+    source_name: row.source_name,
+    source_url: row.source_url,
+    source_published_at: row.source_published_at,
     owner_id: row.owner_id,
     position: row.position,
     content_blocks: row.content_blocks,
