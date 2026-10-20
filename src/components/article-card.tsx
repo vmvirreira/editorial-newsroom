@@ -1,4 +1,5 @@
 import { ArticleExplainers } from "./article-content";
+import { ArticleText } from "./article-text";
 import { StoryListen } from "@/components/story-listen";
 import { storyNarration } from "@/lib/speech/story-speech";
 import { youtubeEmbed } from "@/lib/media/youtube";
@@ -69,7 +70,7 @@ export function ArticleCard({
               : "mt-2 text-sm leading-6 text-stone-700"
           }
         >
-          {article.dek}
+          <ArticleText text={article.dek} inline />
         </p>
         {video && <figure className="mt-4 w-full max-w-sm">
           <iframe

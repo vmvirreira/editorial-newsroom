@@ -40,7 +40,8 @@ test('Public explainer renderer groups approved links, escapes captions and skip
  const code=await readFile(new URL('../src/components/article-content.tsx',import.meta.url),'utf8');
  const output=transpileModule(code,{compilerOptions:{module:ModuleKind.CommonJS,jsx:JsxEmit.ReactJSX}}).outputText;
  const compiledModule={exports:{}};const require=createRequire(import.meta.url); const media=await import('../src/lib/media/youtube.ts');
- Function('require','module','exports',output)(name=>name==='@/lib/media/youtube'?media:require(name),compiledModule,compiledModule.exports);
+ const textRenderer=await import('./article-text-renderer.mjs');
+ Function('require','module','exports',output)(name=>name==='@/lib/media/youtube'?media:name==='./article-text'?textRenderer:require(name),compiledModule,compiledModule.exports);
  const blocks=[{type:'explainer',url:'https://en.wikipedia.org/wiki/Mars',caption:'Mars <script>'},{type:'explainer',url:'javascript:alert(1)',caption:'Unsafe'}];
  const html=renderToStaticMarkup(createElement(compiledModule.exports.ArticleExplainers,{blocks}));
  assert.ok(html.includes('Explore the background'));assert.ok(html.includes('https://en.wikipedia.org/wiki/Mars'));assert.ok(html.includes('&lt;script&gt;'));assert.ok(!html.includes('javascript:'));
