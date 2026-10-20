@@ -1,6 +1,7 @@
 import { StoryListen } from "@/components/story-listen";
 import { storyNarration } from "@/lib/speech/story-speech";
 import { ArticleContent, ArticleExplainers } from "@/components/article-content";
+import { ArticleText } from "@/components/article-text";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
@@ -30,7 +31,7 @@ export default async function ArticlePage({
           {article.title}
         </h1>
         <p className="mt-5 max-w-3xl text-xl leading-8 text-stone-700">
-          {article.dek}
+          <ArticleText text={article.dek} inline />
         </p>
         <StoryListen id={article.id} title={article.title} text={storyNarration(article)} />
         <div className="mt-5 border-y border-stone-300 py-3 text-sm text-stone-600">
@@ -47,7 +48,7 @@ export default async function ArticlePage({
         />}
         <div className="mt-8 grid gap-6 font-serif text-xl leading-9 text-stone-900">
           {article.body.split("\n\n").map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
+            <p key={paragraph}><ArticleText text={paragraph} /></p>
           ))}
           <ArticleContent blocks={article.content_blocks ?? []} />
         </div>

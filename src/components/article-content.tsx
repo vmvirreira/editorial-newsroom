@@ -1,10 +1,11 @@
 import type { ContentBlock } from "@/lib/types";
 import { youtubeEmbed } from "@/lib/media/youtube";
+import { ArticleText } from "./article-text";
 
 export function ArticleContent({ blocks }: { blocks: ContentBlock[] }) {
   return <div className="grid gap-6">{blocks.map((block, index) => {
     if (block.type === "explainer") return null;
-    if (block.type === "text") return <div key={index} className="grid gap-6">{block.text.split("\n\n").map((text, i) => <p key={i}>{text}</p>)}</div>;
+    if (block.type === "text") return <div key={index} className="grid gap-6">{block.text.split("\n\n").map((text, i) => <p key={i}><ArticleText text={text} /></p>)}</div>;
     if (!/^https?:\/\//i.test(block.url)) return null;
     const embed = block.type === "video" ? youtubeEmbed(block.url) : null;
     return <figure key={index} className="grid gap-2">
