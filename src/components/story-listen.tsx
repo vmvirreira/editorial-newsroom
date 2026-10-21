@@ -38,11 +38,16 @@ export function StorySpeechProvider({ children }: { children: React.ReactNode })
   return <SpeechContext.Provider value={speech}>{children}</SpeechContext.Provider>;
 }
 
-export function StoryListen({ id, title, text, compact = false }: { id: string; title: string; text: string; compact?: boolean }) {
+export function useSpeechPlayer() {
   const speech = useContext(SpeechContext);
-  if (!speech) throw new Error("StoryListen requires StorySpeechProvider");
+  if (!speech) throw new Error("Listening requires StorySpeechProvider");
   const state = useSyncExternalStore(speech.subscribe, speech.getSnapshot, serverState);
   const canSpeak = useSyncExternalStore(subscribeSupport, supported, unsupportedOnServer);
+  return { speech, state, canSpeak };
+}
+
+export function StoryListen({ id, title, text, compact = false }: { id: string; title: string; text: string; compact?: boolean }) {
+  const { speech, state, canSpeak } = useSpeechPlayer();
   const active = state.id === id && state.status !== "idle";
   const playing = active && state.status === "playing";
   const starting = active && state.status === "starting";

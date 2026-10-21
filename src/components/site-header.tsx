@@ -1,20 +1,24 @@
 import { MastheadClock } from "./masthead-clock";
 import { MastheadWeather } from "./masthead-weather";
+import { NewsBriefing } from "./news-briefing";
+import { Suspense } from "react";
 import Link from "next/link";
 import { Newspaper, ShieldCheck } from "lucide-react";
 import { signOut } from "@/app/actions";
-import type { Category } from "@/lib/types";
+import type { Article, Category } from "@/lib/types";
 
 type SiteHeaderProps = {
   categories: Category[];
   isAdmin?: boolean;
   signedIn?: boolean;
+  articles?: Article[];
 };
 
 export function SiteHeader({
   categories,
   isAdmin = false,
   signedIn = false,
+  articles,
 }: SiteHeaderProps) {
   return (
     <header className="border-b border-stone-300 bg-[#fbfaf7]">
@@ -57,19 +61,24 @@ export function SiteHeader({
           The Brief and Beyond
         </Link>
       </div>
-      <div className="mx-auto flex max-w-7xl items-center gap-4 border-t border-stone-300 px-4 py-3">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-1 border-t border-stone-300 px-4 py-3">
       <nav aria-label="News categories" className="flex min-w-0 flex-1 gap-5 overflow-x-auto text-sm font-semibold text-stone-800">
         {categories.map((category) => (
           <Link
             key={category.id}
             href={`/category/${category.slug}`}
-            className="whitespace-nowrap transition hover:text-red-800"
+            className="section-link inline-flex min-h-9 items-center whitespace-nowrap"
           >
             {category.name}
           </Link>
         ))}
       </nav>
+      <div className="ml-auto flex shrink-0 items-center gap-2">
+      <Suspense fallback={<span className="text-xs text-stone-500">Loading audio…</span>}>
+        <NewsBriefing articles={articles} />
+      </Suspense>
       <MastheadWeather />
+      </div>
       </div>
     </header>
   );

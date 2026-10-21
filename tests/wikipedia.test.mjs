@@ -47,3 +47,10 @@ test('Public explainer renderer groups approved links, escapes captions and skip
  assert.ok(html.includes('Explore the background'));assert.ok(html.includes('https://en.wikipedia.org/wiki/Mars'));assert.ok(html.includes('&lt;script&gt;'));assert.ok(!html.includes('javascript:'));
  const content=renderToStaticMarkup(createElement(compiledModule.exports.ArticleContent,{blocks}));assert.ok(!content.includes('/wiki/Mars'));
 });
+
+test('Custom Wikipedia links support pasted article URLs, editable labels, mobile links and section anchors',async()=>{
+ const {customWikipediaTopic}=await import('../src/lib/curation/wikipedia-link.ts');
+ assert.deepEqual(customWikipediaTopic(' https://en.wikipedia.org/wiki/Ilhan_Omar ',''),{title:'Ilhan Omar',url:'https://en.wikipedia.org/wiki/Ilhan_Omar'});
+ assert.deepEqual(customWikipediaTopic('https://en.m.wikipedia.org/wiki/Mars#Geography','About Mars'),{title:'About Mars',url:'https://en.wikipedia.org/wiki/Mars#Geography'});
+ for(const url of ['https://en.wikipedia.org.evil.test/wiki/Mars','javascript:alert(1)','https://en.wikipedia.org/w/index.php?search=Mars'])assert.equal(customWikipediaTopic(url,'Label'),null);
+});

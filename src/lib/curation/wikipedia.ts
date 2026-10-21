@@ -1,4 +1,5 @@
-export type WikipediaTopic = { title: string; url: string };
+import { wikipediaUrl, type WikipediaTopic } from "./wikipedia-link.ts";
+export { wikipediaUrl, type WikipediaTopic } from "./wikipedia-link.ts";
 const STOP = new Set('a an the this that these those and or but of for from to in on at by with as is are was were be been being has have had how why what when where who new news says said say after before over under into out up down off more most some all its it their our your my can could will would should may might does do did not no than then there here about amid against first last latest live today gets get makes make takes take warns warning reveals reveals find finds found wants want plans plan blasts blast grab piece holds hold eases ease'.split(' '));
 const CONCEPTS = ['artificial intelligence','climate change','interest rates','solar system','social media','stock market','human rights','nuclear energy','renewable energy','inflation','election','economy','spaceflight','moon','mars','cancer','vaccines'];
 export function headlineTopics(headline: string): string[] {
@@ -13,10 +14,6 @@ export function headlineTopics(headline: string): string[] {
     if (!unique.has(term.toLowerCase())) unique.set(term.toLowerCase(),term);
   }
   return [...unique.values()].slice(0, 6);
-}
-export function wikipediaUrl(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  try { const url = new URL(value); return url.protocol === "https:" && url.hostname === "en.wikipedia.org" && !url.port && !url.username && !url.password && url.pathname.startsWith("/wiki/") && url.pathname.length > 6 && !url.search && !url.hash ? url.toString() : null; } catch { return null; }
 }
 // Resolve actual article pages; never synthesize a /wiki/ URL from an ambiguous name.
 export async function lookupWikipedia(term: string): Promise<WikipediaTopic | null> {

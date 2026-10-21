@@ -28,8 +28,8 @@ export function ArticleCard({
     <article
       className={
         isLead
-          ? `grid grid-cols-1 gap-5 border-b border-stone-300 pb-6 ${article.image_url ? "lg:grid-cols-[1.2fr_0.8fr]" : ""}`
-          : "border-b border-stone-300 pb-5"
+          ? `story-card grid grid-cols-1 gap-5 border-b border-stone-300 pb-6 ${article.image_url ? "lg:grid-cols-[1.2fr_0.8fr]" : ""}`
+          : "story-card border-b border-stone-300 pb-5"
       }
     >
       <Link

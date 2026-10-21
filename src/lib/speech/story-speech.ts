@@ -1,10 +1,4 @@
-import type { Article } from "../types";
-
-export function storyNarration(article: Pick<Article, "title" | "dek" | "body" | "content_blocks" | "source_name">): string {
-  return [article.title, article.source_name ? `Original reporting from ${article.source_name}.` : "", article.dek, article.body,
-    ...(article.content_blocks ?? []).flatMap(block => block.type === "text" ? [block.text] : block.caption ? [block.caption] : []),
-  ].map(text => text.trim()).filter(Boolean).join("\n\n");
-}
+export { storyNarration } from "./narration.ts";
 
 // Short utterances avoid browsers cutting off a long story mid-sentence.
 export function speechChunks(text: string): string[] {
