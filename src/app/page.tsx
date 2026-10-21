@@ -1,4 +1,5 @@
 import { ReadingBreak } from "@/components/reading-break";
+import Link from "next/link";
 import { LocalWeatherPanel } from "@/components/local-weather";
 import { ArticleCard } from "@/components/article-card";
 import { SiteHeader } from "@/components/site-header";
@@ -32,6 +33,7 @@ export default async function Home() {
     <main className="min-h-screen bg-[#fbfaf7] text-stone-950">
       <SiteHeader
         categories={categories}
+        articles={articles}
         signedIn={Boolean(user)}
         isAdmin={Boolean(staff?.data)}
       />
@@ -62,7 +64,7 @@ export default async function Home() {
             <section key={category.id} className="grid content-start gap-4">
               <div>
                 <h2 className="font-serif text-3xl font-black tracking-[-0.03em]">
-                  {category.name}
+                  <Link href={`/category/${category.slug}`} className="section-link">{category.name}</Link>
                 </h2>
                 <p className="mt-1 text-sm leading-6 text-stone-600">
                   {category.deck}

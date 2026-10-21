@@ -94,3 +94,11 @@ US ZIP weather uses Zippopotam.us/GeoNames for location and National Weather Ser
 Main-section headlines are 28px on phones and 30px on larger screens, compared with 24px in The Latest. The category navigation includes an icon and today's forecast temperature on its right, using the same saved ZIP and shared request as the weather panel. Set ZIP opens the homepage weather panel; changing or forgetting the ZIP updates both displays.
 
 In a story's Additional content section, Find a YouTube video searches YouTube in a new tab using the headline or edited keywords. Paste a chosen video's link, preview it, add a caption, and choose Add video to story. Save the story to persist the new video block; move or remove it with the existing block controls. Watch, share, Shorts, live, and embed URLs normalize to one canonical video URL, and public stories use YouTube's privacy-enhanced embed domain. Search results are viewed on YouTube; no YouTube API key is needed.
+
+### News briefing and custom explainers
+
+Play all beside the masthead weather reads each published headline and displayed summary once, in homepage order (main stories, then The Latest). Pause/Resume continues from the same place; Stop resets the briefing. Selecting an individual story stops the briefing, and navigation stops playback. Both modes speak link labels and omit web addresses and HTML markup. Browser voices handle audio, and physical iPhone playback still depends on the device's audio settings.
+
+The Wikipedia picker also accepts a pasted English Wikipedia article URL and optional label. Mobile Wikipedia links normalize to the desktop domain; section anchors are preserved. Selected labels can be edited, and up to four links can be chosen. Save the story or prepare its curated draft to persist the selected explainers.
+
+Category navigation and homepage section headings have hover/focus feedback, and story cards have a subtle hover highlight and lift on devices with a fine pointer. Keyboard focus remains visible. The new effects disable motion when reduced motion is requested.

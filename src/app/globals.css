@@ -30,3 +30,68 @@ textarea {
   background: #7f1d1d;
   color: #fff;
 }
+
+.section-link {
+  position: relative;
+  display: inline-flex;
+  transition: color 160ms ease;
+}
+
+.section-link::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  opacity: 0;
+  transform: scaleX(0.35);
+  transform-origin: left;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.section-link:focus-visible {
+  color: #7f1d1d;
+  outline: 2px solid #7f1d1d;
+  outline-offset: 4px;
+}
+
+.section-link:focus-visible::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.story-card {
+  transition: transform 160ms ease, background-color 160ms ease,
+    border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.story-card:focus-within {
+  background-color: rgb(245 245 244 / 60%);
+  border-color: #a8a29e;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .section-link:hover {
+    color: #7f1d1d;
+  }
+  .section-link:hover::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  .story-card:hover {
+    transform: translateY(-2px);
+    background-color: rgb(245 245 244 / 60%);
+    border-color: #a8a29e;
+    box-shadow: 0 8px 18px -16px rgb(28 25 23 / 50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story-card, .section-link, .section-link::after {
+    transition: none;
+  }
+  .story-card:hover {
+    transform: none;
+  }
+}
