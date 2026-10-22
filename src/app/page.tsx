@@ -1,4 +1,5 @@
-import { ReadingBreak } from "@/components/reading-break";
+import { Suspense } from "react";
+import { DailyEdition, DailyEditionFallback } from "@/components/daily-edition";
 import Link from "next/link";
 import { LocalWeatherPanel } from "@/components/local-weather";
 import { ArticleCard } from "@/components/article-card";
@@ -57,7 +58,8 @@ export default async function Home() {
           ))}
         </aside>
       </section>
-      <section aria-label="Beyond the news" className="mx-auto grid w-full max-w-7xl gap-5 px-4 pb-8 lg:grid-cols-[0.8fr_1.2fr]"><ReadingBreak /><LocalWeatherPanel /></section>
+      <Suspense fallback={<DailyEditionFallback />}><DailyEdition /></Suspense>
+      <section aria-label="Local forecast" className="mx-auto max-w-7xl px-4 pb-8"><LocalWeatherPanel /></section>
       <section className="mx-auto max-w-7xl px-4 pb-12">
         <div className="grid gap-8 border-t border-stone-950 pt-6 md:grid-cols-2 lg:grid-cols-3">
           {grouped.map(({ category, articles: categoryArticles }) => (
