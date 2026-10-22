@@ -1,4 +1,5 @@
 import { XMLParser, XMLValidator } from "fast-xml-parser";
+import { decodeHTML } from "entities";
 import type { CurationSource } from "./sources";
 
 export type FeedStory = {
@@ -16,8 +17,9 @@ const MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
 const parser = new XMLParser({ ignoreAttributes: false, processEntities: false, parseTagValue: false, trimValues: true });
 
 function text(value: unknown): string {
+  if (value && typeof value === "object" && "#text" in value) value = value["#text"];
   if (typeof value !== "string") return "";
-  return value.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "").replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&apos;|&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&#(x[0-9a-f]+|[0-9]+);/gi, (_, code) => { const point = code[0].toLowerCase() === "x" ? parseInt(code.slice(1), 16) : Number(code); return point > 0 && point <= 0x10ffff ? String.fromCodePoint(point) : ""; }).replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+  return decodeHTML(value).replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "").replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
 }
 export function canonicalSourceUrl(value: unknown, source: CurationSource): string | null {
   if (typeof value !== "string") return null;
@@ -33,21 +35,32 @@ export function parseFeed(xml: string, source: CurationSource, now = Date.now())
   if (Buffer.byteLength(xml) > MAX_BYTES || /<!DOCTYPE|<!ENTITY/i.test(xml)) throw new Error("Unsupported feed format.");
   if (XMLValidator.validate(xml) !== true) throw new Error("Invalid feed XML.");
   const parsed = parser.parse(xml);
-  if (!parsed?.rss?.channel) throw new Error("Expected an RSS news feed.");
-  const raw = parsed.rss.channel.item;
+  const format = parsed?.rss?.channel ? "rss" : parsed?.feed ? "atom" : parsed?.["rdf:RDF"] ? "rdf" : null;
+  if (!format) throw new Error("Expected an RSS or Atom news feed.");
+  const raw = format === "rss" ? parsed.rss.channel.item : format === "atom" ? parsed.feed.entry : parsed["rdf:RDF"].item;
   const items: Record<string, unknown>[] = Array.isArray(raw) ? raw : raw ? [raw] : [];
   const seen = new Set<string>();
   return items.flatMap((item) => {
     const headline = text(item.title).slice(0, 300);
-    const source_url = canonicalSourceUrl(item.link, source);
-    const timestamp = Date.parse(typeof item.pubDate === "string" ? item.pubDate : "");
+    // Publisher metadata prevents unrelated Google News matches from being mislabeled.
+    if (source.publisherHost) {
+      const publisher = item.source as Record<string, unknown> | undefined;
+      if (!canonicalSourceUrl(publisher?.["@_url"], { ...source, hosts: [source.publisherHost] })) return [];
+    }
+    let link = source.linkField === "comments" ? item.comments : item.link;
+    if (format === "atom") {
+      const links = Array.isArray(item.link) ? item.link : [item.link];
+      link = links.find((entry) => entry && typeof entry === "object" && (!entry["@_rel"] || entry["@_rel"] === "alternate"))?.["@_href"];
+    }
+    const source_url = canonicalSourceUrl(link, source);
+    const timestamp = Date.parse(text(format === "atom" ? item.published ?? item.updated : item.pubDate ?? item["dc:date"]));
     if (!source_url || headline.length < 3 || !Number.isFinite(timestamp) || timestamp > now + 300_000 || now - timestamp > MAX_AGE_MS || seen.has(source_url)) return [];
     seen.add(source_url);
-    return [{ source_id: source.id, source_name: source.name, source_url, headline, source_preview: text(item.description).slice(0, 1000), source_published_at: new Date(timestamp).toISOString(), category_slug: source.category }];
+    return [{ source_id: source.id, source_name: source.name, source_url, headline, source_preview: text(format === "atom" ? item.summary ?? item.content : item.description).slice(0, 1000), source_published_at: new Date(timestamp).toISOString(), category_slug: source.category }];
   }).sort((a, b) => b.source_published_at.localeCompare(a.source_published_at)).slice(0, 8);
 }
 export async function fetchSource(source: CurationSource): Promise<FeedStory[]> {
-  const response = await fetch(source.url, { redirect: "error", signal: AbortSignal.timeout(10_000), headers: { "User-Agent": "BriefAndBeyond/1.0 (editorial RSS curation)", Accept: "application/rss+xml, application/xml, text/xml" }, next: { revalidate: 900 } });
+  const response = await fetch(source.url, { redirect: "error", signal: AbortSignal.timeout(10_000), headers: { "User-Agent": "BriefAndBeyond/1.0 (editorial RSS curation)", Accept: "application/rss+xml, application/atom+xml, application/rdf+xml, application/xml, text/xml" }, next: { revalidate: 900 } });
   if (!response.ok || !response.body) throw new Error("Source unavailable.");
   const declaredSize = Number(response.headers.get("content-length"));
   if (declaredSize > MAX_BYTES) throw new Error("Feed too large.");
