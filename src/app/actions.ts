@@ -6,6 +6,7 @@ import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getStaffSession } from "@/lib/staff";
 import { articleSchema } from "@/lib/article-validation";
+import { resolvePublicationTime } from "@/lib/publication-time";
 
 async function requireStaff(editorOnly = false) {
   const session = await getStaffSession();
@@ -45,20 +46,21 @@ export async function saveArticle(_state: { error: string }, formData: FormData)
   try {
     const { supabase, user, role } = await requireStaff();
     const fields = Object.fromEntries(formData);
-    const date = new Date(String(fields.published_at));
-    const parsed = articleSchema.safeParse({ ...fields, id: fields.id || undefined, published_at: Number.isNaN(date.getTime()) ? "" : date.toISOString(), is_featured: fields.is_featured === "on", content_blocks: JSON.parse(String(fields.content_blocks || "[]")) });
+    const articleId = fields.id ? z.string().uuid().parse(fields.id) : undefined;
+    let existing: { owner_id: string | null; status: string; published_at: string } | null = null;
+    if (articleId) {
+      const result = await supabase.from("newsroom_articles").select("owner_id,status,published_at").eq("id", articleId).maybeSingle();
+      if (result.error || !result.data) return { error: "This story is unavailable. Refresh the newsroom and try again." };
+      existing = result.data;
+      if (role === "writer" && (existing.owner_id !== user.id || existing.status === "published")) return { error: "You can edit only your own unpublished stories." };
+    }
+    const publishedAt = resolvePublicationTime(String(fields.published_at ?? ""), existing?.status === "published" || String(fields.published_at ?? "").trim() ? existing?.published_at : undefined);
+    const parsed = articleSchema.safeParse({ ...fields, id: fields.id || undefined, published_at: publishedAt, is_featured: fields.is_featured === "on", content_blocks: JSON.parse(String(fields.content_blocks || "[]")) });
     if (!parsed.success) return { error: parsed.error.issues.map((i) => `${i.path.join(".") || "Article"}: ${i.message}`).join(" ") };
     const { id, ...article } = parsed.data;
     if (role === "writer" && (article.status === "published" || article.is_featured)) return { error: "Editors handle publication and front-page placement. Submit your story for review." };
-    if (id) {
-      const { data: existing } = await supabase.from("newsroom_articles").select("id,owner_id,status").eq("id", id).maybeSingle();
-      if (!existing || (role === "writer" && (existing.owner_id !== user.id || existing.status === "published"))) return { error: "You can edit only your own unpublished stories." };
-      const { error } = await supabase.from("newsroom_articles").update(article).eq("id", id).select("id").single();
-      if (error) return { error: error.code === "23505" ? "That slug is already in use." : "Unable to save. Check permissions and database setup." };
-    } else {
-      const { error } = await supabase.from("newsroom_articles").insert({ ...article, owner_id: user.id });
-      if (error) return { error: error.code === "23505" ? "That slug is already in use." : "Unable to save. Check permissions and database setup." };
-    }
+    const { error } = await supabase.rpc("save_newsroom_article", { article_id: id ?? null, fields: article });
+    if (error) return { error: error.code === "23505" ? "That slug is already in use." : "Unable to save. Refresh the newsroom and try again." };
   } catch {
     return { error: "Unable to save. Check your sign-in and content fields." };
   }

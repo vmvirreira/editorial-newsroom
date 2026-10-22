@@ -1,3 +1,4 @@
+import { PublicationTime } from "./publication-time";
 import { ArticleExplainers } from "./article-content";
 import { ArticleText } from "./article-text";
 import { StoryListen } from "@/components/story-listen";
@@ -88,6 +89,7 @@ export function ArticleCard({
         <p className="mt-4 text-xs uppercase tracking-[0.14em] text-stone-500">
           {article.source_name ? `Curated · ${article.source_name}` : `By ${article.author}`}
         </p>
+        <p className="mt-2 text-xs text-stone-500"><PublicationTime value={article.published_at} /></p>
       </div>
     </article>
   );
