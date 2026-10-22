@@ -39,6 +39,7 @@ export default async function Home() {
         isAdmin={Boolean(staff?.data)}
       />
       <section className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 py-8 lg:grid-cols-[1fr_320px]">
+        <div className="grid min-w-0 content-start gap-8">
         <section aria-label="Top stories" className="grid min-w-0 grid-cols-1 content-start gap-8">
           {mainStories.map((article, index) => (
             <ArticleCard
@@ -49,6 +50,8 @@ export default async function Home() {
             />
           ))}
         </section>
+        <Suspense fallback={<DailyEditionFallback />}><DailyEdition /></Suspense>
+        </div>
         <aside aria-labelledby="latest-heading" className="grid content-start gap-5 border-l-0 border-stone-300 lg:border-l lg:pl-6">
           <h2 id="latest-heading" className="border-b border-stone-950 pb-2 font-serif text-2xl font-black">
             The Latest
@@ -58,7 +61,6 @@ export default async function Home() {
           ))}
         </aside>
       </section>
-      <Suspense fallback={<DailyEditionFallback />}><DailyEdition /></Suspense>
       <section aria-label="Local forecast" className="mx-auto max-w-7xl px-4 pb-8"><LocalWeatherPanel /></section>
       <section className="mx-auto max-w-7xl px-4 pb-12">
         <div className="grid gap-8 border-t border-stone-950 pt-6 md:grid-cols-2 lg:grid-cols-3">
