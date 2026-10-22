@@ -1,3 +1,4 @@
+import { PublicationTime } from "@/components/publication-time";
 import { StoryListen } from "@/components/story-listen";
 import { storyNarration } from "@/lib/speech/story-speech";
 import { ArticleContent, ArticleExplainers } from "@/components/article-content";
@@ -36,6 +37,7 @@ export default async function ArticlePage({
         <StoryListen id={article.id} title={article.title} text={storyNarration(article)} />
         <div className="mt-5 border-y border-stone-300 py-3 text-sm text-stone-600">
           {article.source_url ? <span>Curated by {article.author} · Original reporting: <a href={article.source_url} target="_blank" rel="noopener noreferrer" className="font-semibold underline">{article.source_name} ↗</a>{article.source_published_at && ` · Source published ${new Date(article.source_published_at).toLocaleDateString("en-GB", { timeZone: "UTC", year: "numeric", month: "short", day: "numeric" })}`}</span> : <>By <span className="font-semibold text-stone-950">{article.author}</span></>}
+          <p className="mt-2"><PublicationTime value={article.published_at} /></p>
         </div>
         <ArticleExplainers blocks={article.content_blocks ?? []} headline={article.title} />
         {article.image_url && <Image

@@ -77,7 +77,7 @@ export async function getPublishedArticles(): Promise<Article[]> {
     .eq("status", "published")
     .lte("published_at", new Date().toISOString())
     .order("position", { ascending: true })
-    .order("published_at", { ascending: false });
+    .order("id", { ascending: true });
 
   if (error) throw new Error("Unable to load articles. Check the database setup.");
   return (data as ArticleRow[]).map(mapArticle);
@@ -92,7 +92,7 @@ export async function getAllArticlesForAdmin(ownerId?: string): Promise<Article[
   if (ownerId) query = query.eq("owner_id", ownerId);
   const { data, error } = await query
     .order("position", { ascending: true })
-    .order("published_at", { ascending: false });
+    .order("id", { ascending: true });
 
   if (error) throw new Error("Unable to load the newsroom. Check the database setup.");
   return ((data ?? []) as ArticleRow[]).map(mapArticle);

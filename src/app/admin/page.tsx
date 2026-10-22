@@ -34,7 +34,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Promis
       <section className="grid gap-4">
         <div className="flex items-center gap-4"><h2 className="font-serif text-3xl font-bold">{canEdit ? "Edit story" : "New story"}</h2>{query.edit && <Link href="/admin" className="underline">New story</Link>}</div>
         {query.edit && !canEdit && <p role="alert" className="text-red-900">This story is unavailable for editing.</p>}
-        <AdminForm key={canEdit ? selected.id : "new"} categories={categories} role={role} article={canEdit ? selected : undefined} />
+        <AdminForm key={canEdit ? selected.id : "new"} categories={categories} role={role} article={canEdit ? selected : undefined} publicationValue={canEdit && (selected.status === "published" || new Date(selected.published_at).getTime() > new Date().getTime()) ? new Date(selected.published_at).toISOString().slice(0, 16) : ""} />
       </section>
     </section>
   </main>;
