@@ -32,11 +32,10 @@ function eligible(story: AutoCandidate, source: CurationSource, now: number): bo
   return source.kind!=="community" && (!source.publisherHost || topicRelevance(story)>0) && source.category===story.category_slug && Boolean(canonicalSourceUrl(story.source_url,source)) && story.headline.length>=3 && Number.isFinite(published) && published<=now && reference-published<=72*3600000 && !/^(opinion|editorial|letters|sponsored|advertisement)\s*[:|–—-]/i.test(story.headline);
 }
 function baseScore(story: AutoCandidate, source: CurationSource, now: number): number {
-  const observed=Date.parse(story.observed_at ?? "");const reference=Number.isFinite(observed) ? Math.min(now,observed) : now;
-  const hours=Math.max(0,(reference-Date.parse(story.source_published_at))/3600000);
+  const hours=Math.max(0,(now-Date.parse(story.source_published_at))/3600000);
   const relevance=topicRelevance(story);
   const established=/^(bbc|npr|pbs|ap|reuters)-/.test(source.id) ? 12 : source.kind==="primary" || source.id.startsWith("nasa-") ? 6 : 8;
-  return Math.max(0,40-hours*0.65)+Math.min(7,relevance)*4+established+(story.source_preview.trim().length>=60 ? 4 : 0);
+  return Math.max(0,40-hours*0.65)+Math.min(7,relevance)*4+established+(story.source_preview.trim().length>=60 ? 4 : 0)-(hours>72 ? 40 : 0);
 }
 export function rankAutoStories(candidates: AutoCandidate[], categories: readonly string[], now=Date.now(), sources=CURATION_SOURCES): RankedStory[] {
   const catalog=new Map(sources.map(source=>[source.id,source]));const urls=new Set<string>();
