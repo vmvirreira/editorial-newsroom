@@ -1,3 +1,6 @@
+import { requestedNewsView } from "@/lib/auto-news/preferences";
+import type { NewsView } from "@/lib/auto-news/mode";
+import { NewsViewSelector } from "./news-view-selector";
 import { MastheadClock } from "./masthead-clock";
 import { MastheadWeather } from "./masthead-weather";
 import { NewsBriefing } from "./news-briefing";
@@ -9,21 +12,24 @@ import type { Article, Category } from "@/lib/types";
 
 type SiteHeaderProps = {
   categories: Category[];
+  viewMode?: NewsView;
   isAdmin?: boolean;
   signedIn?: boolean;
   articles?: Article[];
 };
 
-export function SiteHeader({
+export async function SiteHeader({
   categories,
   isAdmin = false,
   signedIn = false,
   articles,
+  viewMode,
 }: SiteHeaderProps) {
+  const mode = await requestedNewsView(viewMode);
   return (
     <header className="border-b border-stone-300 bg-[#fbfaf7]">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 border-b border-stone-200 px-4 py-3 text-xs uppercase tracking-[0.18em] text-stone-600">
-        <Link href="/" className="flex items-center gap-2 font-semibold">
+        <Link href={`/?view=${mode}`} className="flex items-center gap-2 font-semibold">
           <Newspaper className="h-4 w-4 shrink-0" />
           <MastheadClock initialIso={new Date().toISOString()} />
         </Link>
@@ -55,7 +61,7 @@ export function SiteHeader({
       </div>
       <div className="mx-auto max-w-7xl px-4 py-6 text-center">
         <Link
-          href="/"
+          href={`/?view=${mode}`}
           className="font-serif text-5xl font-black tracking-[-0.05em] text-stone-950 sm:text-7xl"
         >
           The Brief and Beyond
@@ -66,14 +72,15 @@ export function SiteHeader({
         {categories.map((category) => (
           <Link
             key={category.id}
-            href={`/category/${category.slug}`}
+            href={`/category/${category.slug}?view=${mode}`}
             className="section-link inline-flex min-h-9 items-center whitespace-nowrap"
           >
             {category.name}
           </Link>
         ))}
       </nav>
-      <div className="ml-auto flex shrink-0 items-center gap-2">
+      <div className="ml-auto flex max-w-full flex-wrap items-center gap-2">
+      <NewsViewSelector mode={mode} />
       <Suspense fallback={<span className="text-xs text-stone-500">Loading audio…</span>}>
         <NewsBriefing articles={articles} />
       </Suspense>

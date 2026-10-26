@@ -11,6 +11,8 @@ export type Category = {
 };
 
 export type Article = {
+  selection?: "auto";
+  selection_note?: string;
   id: string;
   category_id: string;
   category_slug: string;
