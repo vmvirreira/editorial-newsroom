@@ -1,3 +1,4 @@
+import type { NewsView } from "@/lib/auto-news/mode";
 import { PublicationTime } from "./publication-time";
 import { ArticleExplainers } from "./article-content";
 import { ArticleText } from "./article-text";
@@ -10,6 +11,7 @@ import type { Article } from "@/lib/types";
 
 type ArticleCardProps = {
   article: Article;
+  viewMode?: NewsView;
   priority?: boolean;
   variant?: "lead" | "compact" | "feature";
 };
@@ -17,9 +19,12 @@ type ArticleCardProps = {
 export function ArticleCard({
   article,
   priority = false,
+  viewMode,
   variant = "compact",
 }: ArticleCardProps) {
   const isLead = variant === "lead";
+  const automatic = article.selection === "auto";
+  const href = automatic && article.source_url ? article.source_url : `/article/${article.slug}`;
   const video = (article.content_blocks ?? []).flatMap((block) => {
     const embed = block.type === "video" ? youtubeEmbed(block.url) : null;
     return embed && block.type === "video" ? [{ embed, caption: block.caption }] : [];
@@ -34,7 +39,7 @@ export function ArticleCard({
       }
     >
       <Link
-        href={`/article/${article.slug}`}
+        href={href} target={automatic ? "_blank" : undefined} rel={automatic ? "noopener noreferrer" : undefined}
         className={isLead && article.image_url ? "block overflow-hidden bg-stone-200" : "hidden"}
       >
         {article.image_url && <Image
@@ -48,12 +53,12 @@ export function ArticleCard({
       </Link>
       <div className={`min-w-0 [overflow-wrap:anywhere] ${isLead ? "flex flex-col justify-center" : ""}`}>
         <Link
-          href={`/category/${article.category_slug}`}
+          href={`/category/${article.category_slug}${viewMode ? `?view=${viewMode}` : ""}`}
           className="mb-2 inline-block text-xs font-bold uppercase tracking-[0.16em] text-red-900"
         >
           {article.category_name}
         </Link>
-        <Link href={`/article/${article.slug}`} className="group">
+        <Link href={href} target={automatic ? "_blank" : undefined} rel={automatic ? "noopener noreferrer" : undefined} className="group">
           <h2
             className={
               isLead
@@ -64,6 +69,7 @@ export function ArticleCard({
             {article.title}
           </h2>
         </Link>
+        {automatic && <p className="mt-3 text-[0.65rem] font-bold uppercase tracking-wider text-stone-500">Automatically selected · Source feed preview</p>}
         <p
           className={
             isLead
@@ -73,6 +79,8 @@ export function ArticleCard({
         >
           <ArticleText text={article.dek} inline />
         </p>
+        {automatic && article.source_url && <a href={article.source_url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-xs font-semibold underline">Read original report ↗</a>}
+        {automatic && article.selection_note && <p className="mt-2 text-xs leading-5 text-stone-500">{article.selection_note}</p>}
         {video && <figure className="mt-4 w-full max-w-sm">
           <iframe
             src={video.embed}
@@ -87,9 +95,9 @@ export function ArticleCard({
         <ArticleExplainers blocks={article.content_blocks ?? []} headline={article.title} compact />
         <StoryListen id={article.id} title={article.title} text={storyNarration(article)} compact />
         <p className="mt-4 text-xs uppercase tracking-[0.14em] text-stone-500">
-          {article.source_name ? `Curated · ${article.source_name}` : `By ${article.author}`}
+          {article.source_name ? `${automatic ? "Reporting" : "Curated"} · ${article.source_name}` : `By ${article.author}`}
         </p>
-        <p className="mt-2 text-xs text-stone-500"><PublicationTime value={article.published_at} /></p>
+        <p className="mt-2 text-xs text-stone-500"><PublicationTime value={article.published_at} label={automatic ? "Source published" : "Published"} /></p>
       </div>
     </article>
   );
