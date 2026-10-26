@@ -52,6 +52,7 @@ test('Ranking prefers fresh substantive reports, rejects unsafe URLs, future dat
 test('Retained source pools keep their actual publication timestamps during upstream outages',()=>{
  const cached={...story('science',0,'New telescope observes distant galaxies',100),observed_at:new Date(now-99*3600000).toISOString()};
  const selected=rankAutoStories([cached],['science'],now,sources);assert.equal(selected.length,1);assert.equal(selected[0].source_published_at,cached.source_published_at);
+ const fresh=story('technology',0,'Company unveils product',1);assert.equal(rankAutoStories([cached,fresh],['science','technology'],now,sources)[0].headline,fresh.headline);
 });
 test('One failed source does not block a category; an empty revalidation is rejected rather than replacing a good pool',async()=>{
  const catalog=[...sources.filter(s=>s.category==='science'),{...sources[0],id:'discussion',category:'science',kind:'community'}];const called=[];
