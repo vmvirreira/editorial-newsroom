@@ -60,5 +60,7 @@ export function rankAutoStories(candidates: AutoCandidate[], categories: readonl
     const pick=choices.find(choice=>!previous.has(choice.story.publisher)) ?? choices[0];
     if(pick){used.add(pick.index);previous.add(pick.story.publisher);publishers.set(category,previous);selected.push(pick.story);}
   }
-  return selected.sort((a,b)=>b.score-a.score || a.source_url.localeCompare(b.source_url));
+  // Scores choose the edition; source publication times determine reading order.
+  // Keep the newest selected reports in the lead slots and at the start of audio.
+  return selected.sort((a,b)=>Date.parse(b.source_published_at)-Date.parse(a.source_published_at) || b.score-a.score || a.source_url.localeCompare(b.source_url));
 }

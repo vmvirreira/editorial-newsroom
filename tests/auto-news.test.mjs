@@ -54,6 +54,21 @@ test('Retained source pools keep their actual publication timestamps during upst
  const selected=rankAutoStories([cached],['science'],now,sources);assert.equal(selected.length,1);assert.equal(selected[0].source_published_at,cached.source_published_at);
  const fresh=story('technology',0,'Company unveils product',1);assert.equal(rankAutoStories([cached,fresh],['science','technology'],now,sources)[0].headline,fresh.headline);
 });
+test('Selected reports lead with actual publication recency even when an older report scores higher',()=>{
+ const older=story('science',0,'NASA scientists study climate research and species in space',20);
+ const newer=story('technology',0,'Company unveils a product',1);
+ const middle=story('culture',0,'Museum opens a collection',5);
+ const selected=rankAutoStories([older,newer,middle],['science','technology','culture'],now,sources);
+ assert.equal(selected.length,3);
+ assert.ok(selected.find(item=>item.headline===older.headline).score>selected.find(item=>item.headline===newer.headline).score);
+ assert.deepEqual(selected.map(item=>item.headline),[newer.headline,middle.headline,older.headline]);
+ // Refresh/observation time cannot promote an older publication.
+ const refreshed=rankAutoStories([{...older,observed_at:new Date(now).toISOString()},newer,middle],['science','technology','culture'],now,sources);
+ assert.deepEqual(refreshed.map(item=>item.source_published_at),selected.map(item=>item.source_published_at));
+ // Input/feed completion order cannot change ties.
+ const tied=[story('science',0,'Ocean research discovers unusual species',2),story('technology',0,'Company announces a product',2),story('culture',0,'Museum opens a collection',2)];
+ assert.deepEqual(rankAutoStories(tied,categories,now,sources).map(item=>item.source_url),rankAutoStories([...tied].reverse(),categories,now,sources).map(item=>item.source_url));
+});
 test('One failed source does not block a category; an empty revalidation is rejected rather than replacing a good pool',async()=>{
  const catalog=[...sources.filter(s=>s.category==='science'),{...sources[0],id:'discussion',category:'science',kind:'community'}];const called=[];
  const pool=await collectAutoPool('science',async source=>{called.push(source.id);if(source.id==='science-0')throw Error('outage');return [story('science',Number(source.id.at(-1)),'Research measures new climate patterns')];},now,catalog);
