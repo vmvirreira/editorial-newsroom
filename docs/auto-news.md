@@ -4,7 +4,7 @@ The masthead offers three views on the homepage and category pages:
 
 - Smart is the default. It uses Curated when the newest actually published article is at most 24 hours old, otherwise Auto. Drafts and future publications are ignored. The decision uses the newest publication timestamp across the entire editorial order, never `updated_at` or position.
 - Curated always preserves the editor's published articles and ordering, even when old.
-- Auto offers up to two distinct reports per category. Its three highest-ranked reports lead the homepage, the remaining selections appear in Latest, and category sections show their two selected reports.
+- Auto offers up to two distinct reports per category. Relevance scores choose the reports, then the selected edition is ordered by source publication time, newest first. Its three newest selected reports lead the homepage, the remaining selections appear in Latest, and category sections show their two selected reports in the same order. Play all follows that order. Equal publication times use relevance score, then source URL, as stable tie breakers.
 
 An explicit masthead selection sets a session cookie (`bb-news-view`), with no account required. The validated `view` URL parameter takes precedence, and category links retain it. Smart is evaluated on page navigation; it does not switch a reader's content while they are reading. A new publication makes Smart choose Curated again on the next navigation. Daily features and editor overrides appear in either homepage view.
 
