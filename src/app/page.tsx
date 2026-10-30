@@ -7,9 +7,12 @@ import { DailyEdition, DailyEditionFallback } from "@/components/daily-edition";
 import Link from "next/link";
 import { LocalWeatherPanel } from "@/components/local-weather";
 import { ArticleCard } from "@/components/article-card";
+import { LatestStories } from "@/components/latest-stories";
 import { SiteHeader } from "@/components/site-header";
 import { getCategories, getPublishedArticles } from "@/lib/news";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+
+const LATEST_PAGE_SIZE = 3;
 
 export default async function Home({ searchParams }: { searchParams: Promise<{view?:string}> }) {
   const [categories, curatedArticles, supabase] = await Promise.all([
@@ -64,14 +67,15 @@ export default async function Home({ searchParams }: { searchParams: Promise<{vi
         </section>
         <Suspense fallback={<DailyEditionFallback />}><DailyEdition /></Suspense>
         </div>
-        <aside aria-labelledby="latest-heading" className="grid content-start gap-5 border-l-0 border-stone-300 lg:border-l lg:pl-6">
-          <h2 id="latest-heading" className="border-b border-stone-950 pb-2 font-serif text-2xl font-black">
-            The Latest
-          </h2>
-          {latestStories.map((article) => (
-            <ArticleCard key={article.id} article={article} viewMode={mode} />
+        <LatestStories key={`${mode}:${articles.map(article => article.id).join(",")}`} total={latestStories.length} pageSize={LATEST_PAGE_SIZE}>
+          {Array.from({ length: Math.ceil(latestStories.length / LATEST_PAGE_SIZE) }, (_, page) => (
+            <div key={page} className="grid gap-5">
+              {latestStories.slice(page * LATEST_PAGE_SIZE, (page + 1) * LATEST_PAGE_SIZE).map(article => (
+                <ArticleCard key={article.id} article={article} viewMode={mode} />
+              ))}
+            </div>
           ))}
-        </aside>
+        </LatestStories>
       </section>
       <section aria-label="Local forecast" className="mx-auto max-w-7xl px-4 pb-8"><LocalWeatherPanel /></section>
       <section className="mx-auto max-w-7xl px-4 pb-12">
